@@ -66,7 +66,7 @@ class CloudEvent extends Event
     private $dataContentType = 'application/json';
 
     /**
-     * @var SimpleData
+     * @var mixed
      * @Serializer\Expose()
      * @Serializer\Type("array")
      */
@@ -190,17 +190,17 @@ class CloudEvent extends Event
     }
 
     /**
-     * @return SimpleData
+     * @return mixed
      */
-    public function getData(): SimpleData
+    public function getData()
     {
         return $this->data;
     }
 
     /**
-     * @param SimpleData $data
+     * @param mixed $data
      */
-    public function setData(SimpleData $data): void
+    public function setData($data): void
     {
         $this->data = $data;
     }
@@ -228,6 +228,8 @@ class CloudEvent extends Event
     {
         if (is_object($this->data) && method_exists($this->data, 'getId')) {
             $this->id = $this->data->getId();
+        } elseif (is_array($this->data) && isset($this->data['id'])) {
+            $this->id = $this->data['id'];
         }
     }
 }
