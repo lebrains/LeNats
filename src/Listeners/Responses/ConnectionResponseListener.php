@@ -4,6 +4,7 @@ namespace LeNats\Listeners\Responses;
 
 use LeNats\Events\Nats\MessageReceived;
 use LeNats\Services\Configuration;
+use LeNats\Services\Connection;
 use NatsStreamingProtocol\ConnectResponse;
 
 class ConnectionResponseListener
@@ -13,9 +14,15 @@ class ConnectionResponseListener
      */
     private $config;
 
-    public function __construct(Configuration $config)
+    /**
+     * @var Connection
+     */
+    private $connection;
+
+    public function __construct(Configuration $config, Connection $connection)
     {
         $this->config = $config;
+        $this->connection = $connection;
     }
 
     public function handle(MessageReceived $message): void
@@ -24,5 +31,6 @@ class ConnectionResponseListener
         $response->mergeFromString($message->payload);
 
         $this->config->configureConnection($response);
+        $this->connection->stopWaiting();
     }
 }

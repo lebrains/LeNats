@@ -42,7 +42,7 @@ abstract class MessageStreamer
     protected function getConnection(): Connection
     {
         if (!$this->connection->isConnected()) {
-            $this->connection->open();
+            $this->connection->open(30); // TODO
         }
 
         return $this->connection;
