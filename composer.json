@@ -2,7 +2,7 @@
   "description": "The LeNats is a Symfony bundle. it's implements event-based architecture with nats streaming on php",
   "name": "lecorp/lenats",
   "type": "symfony-bundle",
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "keywords": ["nats", "nats streaming", "cloud events", "symfony", "php", "event-driven"],
   "authors": [
     {
