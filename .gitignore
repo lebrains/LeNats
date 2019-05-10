@@ -1,11 +1,12 @@
 
 ###> symfony/framework-bundle ###
-/.env.local
+/tmp/.env.local
 /.env.local.php
 /.env.*.local
 /public/bundles/
 /var/
 /vendor/
+/tmp/
 ###< symfony/framework-bundle ###
 
 ###> symfony/phpunit-bridge ###
