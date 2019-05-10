@@ -1,0 +1,30 @@
+services:
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  LeNats\Listeners\:
+    public: true
+    resource: '../../Listeners'
+
+  LeNats\:
+    resource: '../../{Services,Subscribers,Commands}'
+
+  LeNats\Contracts\BufferInterface: '@LeNats\Services\StringBuffer'
+
+  LeNats\Subscription\Subscriber:
+    autowire: true
+
+  LeNats\Subscription\Publisher:
+    autowire: true
+
+  LeNats\Subscription\Connector:
+    autowire: true
+
+  LeNats\Services\EventTypeResolver:
+    arguments:
+      - '%lenats.types%'
+
+  LeNats\Services\Configuration:
+    arguments:
+      - '%lenats.configuration%'
