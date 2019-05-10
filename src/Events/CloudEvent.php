@@ -5,7 +5,6 @@ namespace LeNats\Events;
 use DateTimeImmutable;
 use DateTimeInterface;
 use JMS\Serializer\Annotation as Serializer;
-use LeNats\SimpleData;
 use LeNats\Subscription\Subscription;
 
 /**

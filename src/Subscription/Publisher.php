@@ -29,7 +29,6 @@ class Publisher extends MessageStreamer
     {
         $subject = str_replace(['.created', '.updated', '.deleted'], '', $event->getType());
 
-        $natsSubject = $this->config->getPubPrefix() . '.' . $subject;
         $guid = $this->generator->generateString(16);
 
         $data = $this->serializer->serialize($event, 'json');
@@ -57,6 +56,8 @@ class Publisher extends MessageStreamer
         }
 
         $this->unsubscribe($sid, 1);
+
+        $natsSubject = $this->config->getPubPrefix() . '.' . $subject;
 
         $this->getConnection()->publish(
             $natsSubject,
