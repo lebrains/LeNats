@@ -19,6 +19,7 @@
     "illuminate/support": "^5.8",
     "ircmaxell/random-lib": "^1.2",
     "jms/serializer-bundle": "^3.3",
+    "psr/event-dispatcher": "^1.0",
     "react/socket": "^1.2",
     "react/stream": "^1.1",
     "symfony/console": "4.2.*",
