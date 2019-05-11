@@ -17,6 +17,7 @@ services:
 
   LeNats\Subscription\Publisher:
     autowire: true
+    public: true
 
   LeNats\Subscription\Connector:
     autowire: true

@@ -17,14 +17,13 @@ class ConnectionTest extends KernelTestCase
         $container = self::$container;
 
         $subscriber = $container->get(Subscriber::class);
-
-
         $subscription = new Subscription(getenv('TEST_QUEUE_NAME'));
 
         $subscription->setTimeout(10);
         $subscriber->subscribe($subscription);
     }
 
+    /** @test */
     public function it_publish_data_to_queue()
     {
         static::bootKernel();
@@ -35,9 +34,10 @@ class ConnectionTest extends KernelTestCase
         $event = new CloudEvent();
         $event->setType('skeleton.shtrikul.event.created');
         $event->setId('asd');
-        $data = new SimpleData();
-        $data->setId('sdfsdfsf sdf sdf');
-        $data->setKey('Test 1');
+        $data = [
+            'id' => 'sdfsdfsf sdf sdf',
+            'key' => 'Test 1'
+        ];
         $event->setData($data);
 
         $publisher->publish($event);

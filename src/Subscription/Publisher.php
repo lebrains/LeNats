@@ -35,7 +35,9 @@ class Publisher extends MessageStreamer
         $data = str_replace([
             '"propagation_stopped":false,',
             '"propagation_stopped":true,',
-        ], '', $data);
+            '"propagation_stopped": false,',
+            '"propagation_stopped": true,'
+        ], '', $data); // TODO this field must be ignored
 
         $request = new PubMsg();
         $request->setClientID($this->config->getClientID());

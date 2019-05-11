@@ -5,13 +5,18 @@
          xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/6.5/phpunit.xsd"
          backupGlobals="false"
          colors="true"
-         bootstrap="config/bootstrap.php"
+         bootstrap="./vendor/autoload.php"
 >
     <php>
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
-        <server name="KERNEL_CLASS" value="\LeNats\Kernel" />
+        <server name="KERNEL_CLASS" value="\LeNats\Tests\Mocks\Kernel" />
+        <server name="NATS_DSN" value="SOME DSN HERE" />
+        <server name="NATS_CLIENT_ID" value="SOME CLIENT ID" />
+        <server name="NATS_CLUSTER_ID" value="SOME CLUSTER ID" />
+        <server name="NATS_TLS_PEER_NAME" value="TLS PEER NAME IF NEEDS" />
+        <server name="TEST_QUEUE_NAME" value="TEST QUEUE NAME" />
     </php>
 
     <testsuites>
