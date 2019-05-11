@@ -3,9 +3,11 @@
 namespace LeNats\Subscription;
 
 use Closure;
+use Exception;
 use Google\Protobuf\Internal\Message;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
+use LeNats\Exceptions\StreamException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Listeners\Responses\SubscriptionResponseListener;
 use LeNats\Listeners\SubscriptionListener;
@@ -34,6 +36,12 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
      */
     protected $config;
 
+    /**
+     * @param Subscription $subscription
+     * @return Subscription|null
+     * @throws StreamException
+     * @throws Exception
+     */
     public function subscribe(Subscription $subscription): ?Subscription
     {
         $subscription->setSid($this->generator->generateString(16));
@@ -143,6 +151,10 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         return $request;
     }
 
+    /**
+     * @param CloudEvent $event
+     * @throws StreamException
+     */
     public function acknowledge(CloudEvent $event): void
     {
         $subscription = $event->getSubscription();
