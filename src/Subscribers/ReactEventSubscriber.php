@@ -59,7 +59,7 @@ class ReactEventSubscriber implements EventSubscriberInterface
 
         $this->verboseLog('CLOSE. ' . $event->message);
 
-        $this->connection->stopWaiting();
+        $this->connection->stop();
     }
 
     private function gracefulShutdown(): void
@@ -71,7 +71,7 @@ class ReactEventSubscriber implements EventSubscriberInterface
             $this->verboseLog('Shutdown. Unsubscribed and closed connection');
         }
 
-        $this->connection->stopWaiting();
+        $this->connection->stop();
     }
 
     private function verboseLog(string $message): void

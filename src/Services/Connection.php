@@ -67,7 +67,7 @@ class Connection implements EventDispatcherAwareInterface
     {
         $this->connect();
 
-        $this->wait($timeout);
+        $this->run($timeout);
 
         if ($this->stream === null) {
             throw new ConnectionException('Not connected');
@@ -127,7 +127,7 @@ class Connection implements EventDispatcherAwareInterface
         });
     }
 
-    public function wait(?int $timeout = null): void
+    public function run(?int $timeout = null): void
     {
         if ($timeout > 0) {
             $this->getLoop()->addTimer($timeout, function () {
@@ -143,7 +143,7 @@ class Connection implements EventDispatcherAwareInterface
         return $this->stream !== null && $this->stream->isReadable() && $this->stream->isWritable();
     }
 
-    public function stopWaiting(): void
+    public function stop(): void
     {
         $this->getLoop()->stop();
     }

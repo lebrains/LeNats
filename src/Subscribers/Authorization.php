@@ -60,12 +60,13 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
 
         $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
         $this->connection->ping();
+        $this->connection->run();
     }
 
     public function handleFirstPong(): void
     {
         $this->dispatcher->removeListener(Pong::class, [$this, 'handleFirstPong']);
+        $this->connection->stop();
         $this->dispatch(NatsEvents::CONNECTED);
-        $this->connection->stopWaiting();
     }
 }

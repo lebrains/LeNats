@@ -31,6 +31,7 @@ class ConnectionResponseListener
         $response->mergeFromString($message->payload);
 
         $this->config->configureConnection($response);
-        $this->connection->stopWaiting();
+
+        $this->connection->stop();
     }
 }

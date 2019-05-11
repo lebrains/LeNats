@@ -74,4 +74,14 @@ abstract class MessageStreamer
 
         return $sid;
     }
+
+    public function run(?int $timeout = null): void
+    {
+        $this->getConnection()->run($timeout);
+    }
+
+    public function stop(): void
+    {
+        $this->getConnection()->stop();
+    }
 }

@@ -79,10 +79,6 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
             $requestInbox
         );
 
-        if ($subscription->isStartWaiting()) {
-            $this->getConnection()->wait($subscription->getTimeout());
-        }
-
         return $subscription;
     }
 
@@ -191,6 +187,6 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
             $this->unsubscribe($sid);
         }
 
-        $this->getConnection()->wait(5);
+        $this->getConnection()->run(5);
     }
 }
