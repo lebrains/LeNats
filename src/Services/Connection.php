@@ -197,7 +197,17 @@ class Connection implements EventDispatcherAwareInterface
             $this->logger->info('<<<< ' . $message);
         }
 
-        return $this->stream->write($message);
+        $result = false;
+
+        $this->getLoop()->futureTick(function () use (&$result, $message) {
+            $result = $this->stream->write($message);
+
+            $this->getLoop()->stop();
+        });
+
+        $this->getLoop()->run();
+
+        return $result;
     }
 
     /**

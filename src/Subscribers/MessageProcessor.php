@@ -116,7 +116,10 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
                 if ($command === Protocol::MSG) {
                     try {
                         $message = $this->getFullMessage($line);
+
                         $line .= Protocol::CR_LF . $message[1];
+                        $buffer->acknowledge($line);
+
                         $subscription = $this->subscriber->getSubscription($message[0]);
 
                         $this->dispatch($message[0], new MessageReceived($subscription, $message[1]));
@@ -126,6 +129,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
                         $this->dispatch(new Error($e->getMessage()));
                     }
                 } else {
+                    $buffer->acknowledge($line);
                     foreach (self::$commandEvents[$command] as $class) {
                         $event = $class;
 
@@ -138,7 +142,6 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
                 }
 
                 $handled = true;
-                $buffer->acknowledge($line);
 
                 if ($this->logger && getenv('APP_ENV') === 'dev') {
                     $this->logger->info('>>>> ' . $line);
