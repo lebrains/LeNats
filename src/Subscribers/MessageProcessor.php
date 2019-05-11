@@ -12,6 +12,7 @@ use LeNats\Events\React\Data;
 use LeNats\Events\React\Error;
 use LeNats\Exceptions\NatsException;
 use LeNats\Exceptions\StreamException;
+use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Subscription\Subscriber;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\NatsEvents;
@@ -119,6 +120,8 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
                         $subscription = $this->subscriber->getSubscription($message[0]);
 
                         $this->dispatch($message[0], new MessageReceived($subscription, $message[1]));
+                    } catch (SubscriptionNotFoundException $e) {
+                        // ignore
                     } catch (NatsException $e) {
                         $this->dispatch(new Error($e->getMessage()));
                     }

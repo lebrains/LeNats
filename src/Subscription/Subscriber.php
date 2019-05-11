@@ -6,6 +6,7 @@ use Google\Protobuf\Internal\Message;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
 use LeNats\Exceptions\SubscriptionException;
+use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Listeners\Responses\SubscriptionResponseListener;
 use LeNats\Listeners\SubscriptionListener;
 use LeNats\Services\Configuration;
@@ -125,14 +126,14 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
     /**
      * @param $sid
      * @return Subscription
-     * @throws SubscriptionException
+     * @throws SubscriptionNotFoundException
      */
     public function getSubscription($sid): Subscription
     {
         $subscription = self::$subscriptions[$sid] ?? null;
 
         if ($subscription === null) {
-            throw new SubscriptionException('Subscription not found');
+            throw new SubscriptionNotFoundException('Subscription not found');
         }
 
         return $subscription;
