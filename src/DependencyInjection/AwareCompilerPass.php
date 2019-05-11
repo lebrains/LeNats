@@ -21,6 +21,10 @@ class AwareCompilerPass extends AbstractRecursivePass
 
         $reflection = $this->container->getReflectionClass($value->getClass());
 
+        if ($reflection === null) {
+            return $value;
+        }
+
         if ($reflection->implementsInterface(EventDispatcherAwareInterface::class) && !$value->hasMethodCall('setDispatcher')) {
             $value->addMethodCall('setDispatcher', [new Reference('event_dispatcher')]);
         }
