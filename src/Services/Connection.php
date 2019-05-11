@@ -240,6 +240,8 @@ class Connection implements EventDispatcherAwareInterface
 
     public function __destruct()
     {
-        $this->dispatch(new End('See you soon!'));
+        if ($this->isConnected()) {
+            $this->dispatch(new End('See you soon!'));
+        }
     }
 }
