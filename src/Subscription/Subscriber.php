@@ -35,24 +35,28 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
 
     public function subscribe(Subscription $subscription): ?Subscription
     {
-        if (!($sid = $this->send($subscription->getInbox()))) {
+        $subscription->setSid($this->generator->generateString(16));
+        $this->storeSubscription($subscription);
+
+        if (!$this->send($subscription->getInbox(), $subscription->getSid())) {
             return null;
         }
 
-        $subscription->setSid($sid);
-        $this->registerListener($sid, static::MESSAGE_LISTENER, $subscription);
+        $this->registerListener($subscription->getSid(), static::MESSAGE_LISTENER, $subscription);
 
         if ($subscription->getMessageLimit()) {
-            $this->unsubscribe($sid, $subscription->getMessageLimit());
+            $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
         }
 
         $requestInbox = Inbox::newInbox();
 
-        if (!($sid = $this->send($requestInbox))) {
+        $sid = $this->generator->generateString(16);
+        $this->storeSubscription($subscription, $sid);
+
+        if (!$this->send($requestInbox, $sid)) {
             return null;
         }
 
-        $subscription->setSid($sid);
         $this->registerListener($sid, static::RESPONSE_LISTENER, $subscription);
 
         $this->unsubscribe($sid, 1);
@@ -77,8 +81,6 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
      */
     protected function registerListener(string $sid, string $handlerClass, Subscription $subscription): void
     {
-        self::$subscriptions[$sid] = $subscription;
-
         $handler = $this->container->get($handlerClass);
 
         $this->dispatcher->addListener($sid, [$handler, 'handle']);
@@ -145,5 +147,10 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         }
 
         $this->getConnection()->wait(5);
+    }
+
+    protected function storeSubscription(Subscription $subscription, string $sid = null)
+    {
+        self::$subscriptions[$sid ?? $subscription->getSid()] = $subscription;
     }
 }

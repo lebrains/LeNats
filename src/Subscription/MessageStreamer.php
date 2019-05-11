@@ -59,9 +59,9 @@ abstract class MessageStreamer
         return $this->getConnection()->write(Protocol::UNSUB, $params);
     }
 
-    protected function send(string $subject): ?string
+    protected function send(string $subject, ?string $sid = null): ?string
     {
-        $sid = $this->generator->generateString(16);
+        $sid = $sid ?? $this->generator->generateString(16);
 
         $isSuccess = $this->getConnection()->write(Protocol::SUB, [
             $subject,
