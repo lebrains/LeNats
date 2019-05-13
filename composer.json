@@ -25,7 +25,8 @@
     "symfony/console": "4.2.*",
     "symfony/event-dispatcher": "4.2.*",
     "symfony/framework-bundle": "4.2.*",
-    "symfony/yaml": "4.2.*"
+    "symfony/yaml": "4.2.*",
+    "mhujer/jms-serializer-uuid": "^3.0"
   },
   "config": {
     "preferred-install": {
@@ -47,5 +48,11 @@
   },
   "require-dev": {
     "symfony/phpunit-bridge": "4.2.*"
-  }
+  },
+  "repositories":[
+    {
+      "type": "github",
+      "url": "git@github.com:ilyashtrikul/jms-serializer-uuid.git"
+    }
+  ]
 }
