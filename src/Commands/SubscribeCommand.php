@@ -32,7 +32,9 @@ class SubscribeCommand extends Command
         parent::configure();
 
         $this->addArgument('queue', InputArgument::REQUIRED, 'Nats queue name')
-            ->addOption('timeout', 't', InputOption::VALUE_OPTIONAL, 'Subscription working time', 60);
+            ->addOption('timeout', 't', InputOption::VALUE_OPTIONAL, 'Subscription working time', 60)
+            ->setDescription('Subscribes to queue and dispatches events to your application')
+            ->setHelp('bin/console nats:subscribe your.queue.name [-t timeout]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

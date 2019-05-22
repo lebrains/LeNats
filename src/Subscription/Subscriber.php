@@ -67,8 +67,12 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         }
 
         $this->registerListener($sid, static::RESPONSE_LISTENER);
-        $this->registerListener($sid, function () use ($sid) {
+        $this->registerListener($sid, function () use ($sid, $subscription) {
             $this->remove($sid);
+
+            if ($subscription->getTimeout() !== null) {
+                $this->run($subscription->getTimeout());
+            }
         });
 
         $this->unsubscribe($sid, 1);
