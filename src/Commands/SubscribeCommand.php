@@ -45,6 +45,8 @@ class SubscribeCommand extends Command
         try {
             $this->subscriber->subscribe($subscription);
 
+            $this->subscriber->run($subscription->getTimeout());
+
             $output->write('Received:' . $subscription->getReceived(), true);
             $output->write('Processed:' . $subscription->getProcessed(), true);
         } catch (\Exception $e) {
