@@ -2,6 +2,8 @@
 
 namespace LeNats\Support;
 
+use Exception;
+
 class RandomGenerator
 {
     /**
@@ -10,7 +12,7 @@ class RandomGenerator
      * @param integer $length Length of the string.
      *
      * @return string Random string.
-     * @throws \Exception
+     * @throws Exception
      */
     public function generateString(int $length): string
     {

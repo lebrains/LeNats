@@ -2,12 +2,15 @@
 
 namespace LeNats\Subscription;
 
+use Exception;
 use LeNats\Events\CloudEvent;
+use LeNats\Exceptions\StreamException;
 use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
 use LeNats\Services\Serializer;
 use LeNats\Support\Inbox;
 use NatsStreamingProtocol\PubMsg;
+use function React\Promise\all;
 
 class Publisher extends MessageStreamer
 {
@@ -25,7 +28,14 @@ class Publisher extends MessageStreamer
         $this->serializer = $serializer;
     }
 
-    public function publish(CloudEvent $event): ?string
+    /**
+     * @param CloudEvent $event
+     * @param callable|null $onSuccess
+     * @return void
+     * @throws StreamException
+     * @throws Exception
+     */
+    public function publish(CloudEvent $event, ?callable $onSuccess = null): void
     {
         $subject = str_replace(['.created', '.updated', '.deleted'], '', $event->getType());
 
@@ -36,8 +46,10 @@ class Publisher extends MessageStreamer
             '"propagation_stopped":false,',
             '"propagation_stopped":true,',
             '"propagation_stopped": false,',
-            '"propagation_stopped": true,'
+            '"propagation_stopped": true,',
         ], '', $data); // TODO this field must be ignored
+
+        $promises = [];
 
         $request = new PubMsg();
         $request->setClientID($this->config->getClientID());
@@ -46,27 +58,33 @@ class Publisher extends MessageStreamer
         $request->setData($data);
 
         $inbox = Inbox::newInbox('_STAN.acks.');
-
-        if (!($sid = $this->send($inbox))) {
-            return null;
-        }
+        $promises[] = $this->send($inbox);
 
         $requestInbox = Inbox::newInbox();
-
-        if (!($sid = $this->send($requestInbox))) {
-            return null;
-        }
-
-        $this->unsubscribe($sid, 1);
+        $promises[] = $this->send($requestInbox, function ($sid) {
+            $this->unsubscribe($sid, 1);
+        });
 
         $natsSubject = $this->config->getPubPrefix() . '.' . $subject;
 
-        $this->getConnection()->publish(
+        $promises[] = $this->getConnection()->publish(
             $natsSubject,
             $request,
             $requestInbox
         );
 
-        return $guid;
+        $promise = all($promises);
+
+        if ($onSuccess) {
+            $promise->then(static function () use ($onSuccess, $guid) {
+                $onSuccess($guid);
+            });
+        }
+
+        $promise->then(function () {
+            $this->stop();
+        });
+
+        $this->run();
     }
 }

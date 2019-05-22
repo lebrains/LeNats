@@ -2,7 +2,6 @@
 
 namespace LeNats\Services;
 
-
 use NatsStreamingProtocol\ConnectResponse;
 
 class Configuration

@@ -54,19 +54,23 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
             'pass'     => $config->getPass(),
         ];
 
-        if (!$this->connection->write(Protocol::CONNECT, json_encode($auth))) {
-            throw new ConnectionException('Not connected');
-        }
+        $this->connection->write(Protocol::CONNECT, json_encode($auth))
+            ->then(function () {
+                $this->connection->ping()
+                    ->then(function () {
+                        $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
+                    });
+            })
+            ->otherwise(static function () {
+                throw new ConnectionException('Not connected');
+            });
 
-        $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
-        $this->connection->ping();
         $this->connection->run();
     }
 
     public function handleFirstPong(): void
     {
         $this->dispatcher->removeListener(Pong::class, [$this, 'handleFirstPong']);
-        $this->connection->stop();
         $this->dispatch(NatsEvents::CONNECTED);
     }
 }

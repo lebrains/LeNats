@@ -2,12 +2,16 @@
 
 namespace LeNats\Subscription;
 
+use Closure;
+use Exception;
+use LeNats\Exceptions\StreamException;
 use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
 use LeNats\Support\Protocol;
 use LeNats\Support\RandomGenerator;
 use RandomLib\Factory;
 use RandomLib\Generator;
+use React\Promise\Promise;
 
 abstract class MessageStreamer
 {
@@ -48,7 +52,13 @@ abstract class MessageStreamer
         return $this->connection;
     }
 
-    public function unsubscribe(string $sid, ?int $quantity = null): bool
+    /**
+     * @param string $sid
+     * @param int|null $quantity
+     * @return Promise
+     * @throws StreamException
+     */
+    public function unsubscribe(string $sid, ?int $quantity = null): Promise
     {
         $params = [$sid];
 
@@ -59,20 +69,36 @@ abstract class MessageStreamer
         return $this->getConnection()->write(Protocol::UNSUB, $params);
     }
 
-    protected function send(string $subject, ?string $sid = null): ?string
+    /**
+     * @param string $subject
+     * @param string|callable|null $sid
+     * @param callable|null $onSuccess
+     * @return Promise
+     * @throws StreamException
+     * @throws Exception
+     */
+    protected function send(string $subject, $sid = null, ?callable $onSuccess = null): Promise
     {
-        $sid = $sid ?? $this->generator->generateString(16);
+        if ($sid instanceof Closure) {
+            [$onSuccess, $sid] = [$sid, null];
+        }
 
-        $isSuccess = $this->getConnection()->write(Protocol::SUB, [
+        if ($sid === null) {
+            $sid = $this->generator->generateString(16);
+        }
+
+        $promise = $this->getConnection()->write(Protocol::SUB, [
             $subject,
             $sid,
         ]);
 
-        if (!$isSuccess) {
-            return null;
+        if ($onSuccess) {
+            $promise->then(static function () use ($sid, $onSuccess) {
+                $onSuccess($sid);
+            });
         }
 
-        return $sid;
+        return $promise;
     }
 
     public function run(?int $timeout = null): void

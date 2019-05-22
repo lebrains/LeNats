@@ -18,6 +18,7 @@ use NatsStreamingProtocol\Ack;
 use NatsStreamingProtocol\SubscriptionRequest;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
+use function React\Promise\all;
 
 class Subscriber extends MessageStreamer implements EventDispatcherAwareInterface, ContainerAwareInterface
 {
@@ -38,48 +39,55 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
 
     /**
      * @param Subscription $subscription
-     * @return Subscription|null
+     * @param callable|null $onSuccess
+     * @return static
      * @throws StreamException
      * @throws Exception
      */
-    public function subscribe(Subscription $subscription): ?Subscription
+    public function subscribe(Subscription $subscription, ?callable $onSuccess = null): self
     {
         $subscription->setSid($this->generator->generateString(16));
         $this->storeSubscription($subscription);
 
-        if (!$this->send($subscription->getInbox(), $subscription->getSid())) {
-            return null;
-        }
+        $promises = [];
 
         $this->registerListener($subscription->getSid(), static::MESSAGE_LISTENER, 100);
-
-        if ($subscription->getMessageLimit()) {
-            $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
-        }
+        $promises[] = $this->send($subscription->getInbox(), $subscription->getSid())
+            ->then(function () use ($subscription) {
+                if ($subscription->getMessageLimit()) {
+                    $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
+                }
+            });
 
         $requestInbox = Inbox::newInbox();
 
         $sid = $this->generator->generateString(16);
         $this->storeSubscription($subscription, $sid);
 
-        if (!$this->send($requestInbox, $sid)) {
-            return null;
-        }
+        $promises[] = $this->send($requestInbox, $sid)->then(function () use ($sid) {
+            $this->unsubscribe($sid, 1);
+        });
 
         $this->registerListener($sid, static::RESPONSE_LISTENER);
         $this->registerListener($sid, function () use ($sid) {
             $this->remove($sid);
         });
 
-        $this->unsubscribe($sid, 1);
-
-        $this->getConnection()->publish(
+        $promises[] = $this->getConnection()->publish(
             $this->getPublishSubject($subscription),
             $this->getRequest($subscription),
             $requestInbox
         );
 
-        return $subscription;
+        if ($onSuccess) {
+            $onSuccess($subscription);
+        }
+
+        all($promises)->then(function () use ($subscription) {
+            $this->run($subscription->getTimeout());
+        });
+
+        return $this;
     }
 
     protected function storeSubscription(Subscription $subscription, string $sid = null)
@@ -103,6 +111,11 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         $this->dispatcher->addListener($sid, $listener, $priority);
     }
 
+    /**
+     * @param string $sid
+     * @param string|null $eventName
+     * @throws StreamException
+     */
     public function remove(string $sid, ?string $eventName = null)
     {
         if (empty(self::$subscriptions[$sid])) {
@@ -179,6 +192,9 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         return $subscription;
     }
 
+    /**
+     * @throws StreamException
+     */
     public function unsubscribeAll(): void
     {
         $subscriptions = self::$subscriptions;

@@ -2,6 +2,7 @@
 
 namespace LeNats\Subscribers;
 
+use LeNats\Exceptions\StreamException;
 use LeNats\Services\Configuration;
 use LeNats\Subscription\Connector;
 use LeNats\Subscription\Subscription;
@@ -52,13 +53,15 @@ class Registration implements EventSubscriberInterface
         ];
     }
 
-    public function handle()
+    /**
+     * @throws StreamException
+     */
+    public function handle(): void
     {
         $subscription = new Subscription(
             Inbox::getDiscoverSubject($this->config->getClusterId())
         );
 
         $this->connector->subscribe($subscription);
-        $this->connector->run();
     }
 }

@@ -2,6 +2,8 @@
 
 namespace LeNats\DependencyInjection;
 
+use Exception;
+use InvalidArgumentException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -12,8 +14,8 @@ class LeNatsExtension extends Extension
     /**
      * Loads a specific configuration.
      *
-     * @throws \InvalidArgumentException When provided tag is not defined in this extension
-     * @throws \Exception
+     * @throws InvalidArgumentException When provided tag is not defined in this extension
+     * @throws Exception
      */
     public function load(array $configs, ContainerBuilder $container)
     {

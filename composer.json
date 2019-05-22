@@ -19,14 +19,15 @@
     "illuminate/support": "^5.8",
     "ircmaxell/random-lib": "^1.2",
     "jms/serializer-bundle": "^3.3",
+    "mhujer/jms-serializer-uuid": "^3.0",
     "psr/event-dispatcher": "^1.0",
+    "react/promise-timer": "^1.5",
     "react/socket": "^1.2",
     "react/stream": "^1.1",
     "symfony/console": "4.2.*",
     "symfony/event-dispatcher": "4.2.*",
     "symfony/framework-bundle": "4.2.*",
-    "symfony/yaml": "4.2.*",
-    "mhujer/jms-serializer-uuid": "^3.0"
+    "symfony/yaml": "4.2.*"
   },
   "config": {
     "preferred-install": {

@@ -3,6 +3,7 @@
 namespace LeNats\Listeners;
 
 use LeNats\Events\Nats\MessageReceived;
+use LeNats\Exceptions\StreamException;
 use LeNats\Services\Connection;
 
 class HeartbeatListener
@@ -17,6 +18,10 @@ class HeartbeatListener
         $this->connection = $connection;
     }
 
+    /**
+     * @param MessageReceived $event
+     * @throws StreamException
+     */
     public function handle(MessageReceived $event): void
     {
         $this->connection->publish($event->subscription->getInbox());

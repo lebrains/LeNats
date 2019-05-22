@@ -3,7 +3,6 @@
 namespace LeNats\Listeners\Responses;
 
 use LeNats\Events\Nats\MessageReceived;
-use LeNats\Services\Connection;
 use NatsStreamingProtocol\SubscriptionResponse;
 
 class SubscriptionResponseListener

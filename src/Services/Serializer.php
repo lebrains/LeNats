@@ -12,15 +12,17 @@ namespace LeNats\Services;
 //use Symfony\Component\Serializer\SerializerInterface;
 
 //class Serializer implements SerializerInterface
+use JMS\Serializer\SerializerInterface;
+
 class Serializer
 {
     /**
-//     * @var \Symfony\Component\Serializer\Serializer
-     * @var \JMS\Serializer\SerializerInterface
+     * //     * @var \Symfony\Component\Serializer\Serializer
+     * @var SerializerInterface
      */
     private $serializer;
 
-    public function __construct(\JMS\Serializer\SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
 

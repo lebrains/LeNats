@@ -2,6 +2,7 @@
 
 namespace LeNats\Commands;
 
+use Exception;
 use LeNats\Subscription\Subscriber;
 use LeNats\Subscription\Subscription;
 use LeNats\Subscription\SubscriptionFactory;
@@ -43,13 +44,11 @@ class SubscribeCommand extends Command
         $subscription->setTimeout($input->getOption('timeout'));
 
         try {
-            $this->subscriber->subscribe($subscription);
-
-            $this->subscriber->run($subscription->getTimeout());
+            $this->subscriber->subscribe($subscription)->run();
 
             $output->write('Received:' . $subscription->getReceived(), true);
             $output->write('Processed:' . $subscription->getProcessed(), true);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $output->write('Finished with exception:' . $e->getMessage());
         }
     }
