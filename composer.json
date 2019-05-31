@@ -24,10 +24,10 @@
     "react/promise-timer": "^1.5",
     "react/socket": "^1.2",
     "react/stream": "^1.1",
-    "symfony/console": "4.2.*",
-    "symfony/event-dispatcher": "4.2.*",
-    "symfony/framework-bundle": "4.2.*",
-    "symfony/yaml": "4.2.*"
+    "symfony/console": "^3.4|^4.2",
+    "symfony/event-dispatcher": "^3.4|^4.2",
+    "symfony/framework-bundle": "^3.4|^4.2",
+    "symfony/yaml": "^3.4|^4.2"
   },
   "config": {
     "preferred-install": {
@@ -48,7 +48,7 @@
     }
   },
   "require-dev": {
-    "symfony/phpunit-bridge": "4.2.*"
+    "symfony/phpunit-bridge": "^3.4|^4.2"
   },
   "repositories":[
     {
