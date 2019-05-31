@@ -19,7 +19,7 @@
     "illuminate/support": "^5.8",
     "ircmaxell/random-lib": "^1.2",
     "jms/serializer-bundle": "^3.3",
-    "mhujer/jms-serializer-uuid": "^3.0",
+    "mhujer/jms-serializer-uuid": "^3.1",
     "psr/event-dispatcher": "^1.0",
     "react/promise-timer": "^1.5",
     "react/socket": "^1.2",
@@ -49,11 +49,5 @@
   },
   "require-dev": {
     "symfony/phpunit-bridge": "^3.4|^4.2"
-  },
-  "repositories":[
-    {
-      "type": "github",
-      "url": "git@github.com:ilyashtrikul/jms-serializer-uuid.git"
-    }
-  ]
+  }
 }

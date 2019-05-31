@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c8fbf9abbb5ebe1f92d7675596234097",
+    "content-hash": "e34a926cdd10046d330ff863c10d47b8",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -1540,16 +1540,16 @@
         },
         {
             "name": "mhujer/jms-serializer-uuid",
-            "version": "3.0.0.1",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ilyashtrikul/jms-serializer-uuid.git",
-                "reference": "2d3c697cc3b0ef56a719cb8c0fef09f81e584fc7"
+                "url": "https://github.com/mhujer/jms-serializer-uuid.git",
+                "reference": "c71c96ecef4018dc95189a624f29efc944d75e93"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ilyashtrikul/jms-serializer-uuid/zipball/2d3c697cc3b0ef56a719cb8c0fef09f81e584fc7",
-                "reference": "2d3c697cc3b0ef56a719cb8c0fef09f81e584fc7",
+                "url": "https://api.github.com/repos/mhujer/jms-serializer-uuid/zipball/c71c96ecef4018dc95189a624f29efc944d75e93",
+                "reference": "c71c96ecef4018dc95189a624f29efc944d75e93",
                 "shasum": ""
             },
             "require": {
@@ -1575,35 +1575,7 @@
                     "src"
                 ]
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Mhujer\\JmsSerializer\\": [
-                        "tests"
-                    ]
-                },
-                "classmap": [
-                    "tests"
-                ]
-            },
-            "scripts": {
-                "build": [
-                    "@lint",
-                    "@phpcs",
-                    "@test"
-                ],
-                "coveralls": [
-                    "coveralls -v"
-                ],
-                "lint": [
-                    "parallel-lint src tests"
-                ],
-                "phpcs": [
-                    "phpcs --standard=vendor/consistence/coding-standard/Consistence/ruleset.xml src tests"
-                ],
-                "test": [
-                    "phpunit"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1621,10 +1593,7 @@
                 "serializer",
                 "uuid"
             ],
-            "support": {
-                "source": "https://github.com/ilyashtrikul/jms-serializer-uuid/tree/master"
-            },
-            "time": "2019-05-13T08:28:36+00:00"
+            "time": "2019-05-31T10:42:45+00:00"
         },
         {
             "name": "nesbot/carbon",
