@@ -4,6 +4,6 @@ namespace LeNats\Events\Nats;
 
 use LeNats\Events\Event;
 
-class Ping extends Event
+class Connected extends Event
 {
 }

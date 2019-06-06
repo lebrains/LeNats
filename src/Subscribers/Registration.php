@@ -2,12 +2,12 @@
 
 namespace LeNats\Subscribers;
 
+use LeNats\Events\Nats\Connected;
 use LeNats\Exceptions\StreamException;
 use LeNats\Services\Configuration;
 use LeNats\Subscription\Connector;
 use LeNats\Subscription\Subscription;
 use LeNats\Support\Inbox;
-use LeNats\Support\NatsEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class Registration implements EventSubscriberInterface
@@ -49,7 +49,7 @@ class Registration implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            NatsEvents::CONNECTED => 'handle',
+            Connected::class => 'handle',
         ];
     }
 

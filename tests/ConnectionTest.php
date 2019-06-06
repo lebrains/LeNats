@@ -14,7 +14,7 @@ class ConnectionTest extends KernelTestCase
     public function it_creates_stream()
     {
         static::bootKernel();
-        $container = self::$container;
+        $container = self::$kernel->getContainer();
 
         $subscriber = $container->get(Subscriber::class);
         $subscription = new Subscription(getenv('TEST_QUEUE_NAME'));
@@ -27,7 +27,7 @@ class ConnectionTest extends KernelTestCase
     public function it_publish_data_to_queue()
     {
         static::bootKernel();
-        $container = self::$container;
+        $container = self::$kernel->getContainer();
 
         $publisher = $container->get(Publisher::class);
 

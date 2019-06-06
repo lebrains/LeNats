@@ -14,4 +14,4 @@ parameters:
     fileExtensions:
         - php
     symfony:
-        container_xml_path: './var/cache/dev/srcLeNats_KernelDevDebugContainer.xml'
+#        container_xml_path: './var/cache/dev/srcLeNats_KernelDevDebugContainer.xml'

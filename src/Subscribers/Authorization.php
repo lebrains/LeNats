@@ -3,12 +3,13 @@
 namespace LeNats\Subscribers;
 
 use LeNats\Contracts\EventDispatcherAwareInterface;
+use LeNats\Events\Nats\Connected;
+use LeNats\Events\Nats\Connecting;
 use LeNats\Events\Nats\Pong;
 use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
 use LeNats\Services\Connection;
 use LeNats\Support\Dispatcherable;
-use LeNats\Support\NatsEvents;
 use LeNats\Support\Protocol;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -32,7 +33,7 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
     public static function getSubscribedEvents(): array
     {
         return [
-            NatsEvents::CONNECTING => 'authorize',
+            Connecting::class => 'authorize',
         ];
     }
 
@@ -79,6 +80,6 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
     public function handleFirstPong(): void
     {
         $this->dispatcher->removeListener(Pong::class, [$this, 'handleFirstPong']);
-        $this->dispatch(NatsEvents::CONNECTED);
+        $this->dispatch(new Connected());
     }
 }

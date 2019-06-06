@@ -22,7 +22,6 @@ services:
 
   LeNats\Subscription\Publisher:
     autowire: true
-    public: true
     arguments:
       $suffixes: '%lenats.event.suffixes%'
 

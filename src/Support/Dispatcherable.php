@@ -4,6 +4,7 @@ namespace LeNats\Support;
 
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface as NextEventDispatcherInterface;
 
 trait Dispatcherable
 {
@@ -21,15 +22,17 @@ trait Dispatcherable
     }
 
     /**
-     * @param Event|string $eventObject
-     * @param string|null  $eventName
+     * @param Event       $event
+     * @param string|null $eventName
      */
-    public function dispatch($eventObject, ?string $eventName = null): void
+    public function dispatch(Event $event, ?string $eventName = null): void
     {
-        if (is_string($eventObject)) {
-            [$eventName, $eventObject] = [$eventObject, new Event()];
-        }
+        $eventName = $eventName ?? get_class($event);
 
-        $this->dispatcher->dispatch($eventObject, $eventName);
+        if ($this->dispatcher instanceof NextEventDispatcherInterface) {
+            $this->dispatcher->dispatch($event, $eventName);
+        } else {
+            $this->dispatcher->dispatch($eventName, $event);
+        }
     }
 }

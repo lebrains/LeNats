@@ -4,6 +4,8 @@ namespace LeNats\Subscribers;
 
 use LeNats\Contracts\BufferInterface;
 use LeNats\Contracts\EventDispatcherAwareInterface;
+use LeNats\Events\Nats\BufferUpdated;
+use LeNats\Events\Nats\Connecting;
 use LeNats\Events\Nats\Info;
 use LeNats\Events\Nats\MessageReceived;
 use LeNats\Events\Nats\Ping;
@@ -15,7 +17,6 @@ use LeNats\Exceptions\StreamException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Subscription\Subscriber;
 use LeNats\Support\Dispatcherable;
-use LeNats\Support\NatsEvents;
 use LeNats\Support\Protocol;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -26,7 +27,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 
     /** @var array */
     private static $commandEvents = [
-        Protocol::INFO => [Info::class, NatsEvents::CONNECTING],
+        Protocol::INFO => [Info::class, Connecting::class],
         Protocol::MSG  => [],
         Protocol::PING => [Ping::class],
         Protocol::PONG => [Pong::class],
@@ -78,7 +79,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
     {
         return [
             Data::class                => 'bufferize',
-            NatsEvents::BUFFER_UPDATED => 'processBuffer',
+            BufferUpdated::class       => 'processBuffer',
         ];
     }
 
@@ -86,7 +87,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
     {
         $this->buffer->append($event->data);
 
-        $this->dispatch(NatsEvents::BUFFER_UPDATED);
+        $this->dispatch(new BufferUpdated());
     }
 
     public function processBuffer(): void
