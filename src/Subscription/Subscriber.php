@@ -82,9 +82,9 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
             $onSuccess($subscription);
         }
 
-        all($promises)->then(function () use ($subscription): void {
-            $this->run($subscription->getTimeout());
-        });
+        all($promises);
+
+        $this->run($subscription->getTimeout());
 
         return $this;
     }

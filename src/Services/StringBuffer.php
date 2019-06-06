@@ -24,7 +24,7 @@ class StringBuffer implements BufferInterface
     {
         $start = $start ?? 0;
 
-        return $length ? mb_substr($this->buffer, $start, $length) : $this->buffer;
+        return $length ? substr($this->buffer, $start, $length) : $this->buffer;
     }
 
     public function isEmpty(): bool

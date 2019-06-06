@@ -20,7 +20,7 @@ class ConnectionTest extends KernelTestCase
         $subscription = new Subscription(getenv('TEST_QUEUE_NAME'));
 
         $subscription->setTimeout(5);
-        $subscriber->subscribe($subscription)->run();
+        $subscriber->subscribe($subscription);
     }
 
     /** @test */

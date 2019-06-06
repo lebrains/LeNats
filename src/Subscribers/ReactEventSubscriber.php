@@ -75,7 +75,8 @@ class ReactEventSubscriber implements EventSubscriberInterface
      */
     public function onError(Error $event): void
     {
-        $this->gracefulShutdown();
+        $this->connection->stop(true);
+        $this->connection->close();
 
         $this->verboseLog('ERROR. ' . $event->error);
 
@@ -89,7 +90,8 @@ class ReactEventSubscriber implements EventSubscriberInterface
 
     private function gracefulShutdown(): void
     {
-        if ($this->connection->isConnected()) {
+        if ($this->connection->isConnected() && !$this->connection->isShutdown()) {
+            $this->connection->setShutdown(true);
             $this->subscriber->unsubscribeAll();
 
             $this->connection->close();

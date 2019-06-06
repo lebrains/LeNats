@@ -15,6 +15,7 @@ use LeNats\Support\Protocol;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
 use React\Promise\FulfilledPromise;
 use React\Promise\Promise;
@@ -42,10 +43,16 @@ class Connection implements EventDispatcherAwareInterface
     /** @var PromiseInterface */
     private $promise;
 
+    /** @var TimerInterface[] */
+    private $timers = [];
+
     /**
      * @var LoggerInterface|null
      */
     private $logger;
+
+    /** @var bool */
+    private $shutdown = false;
 
     public function __construct(Configuration $config, ?LoggerInterface $logger = null)
     {
@@ -58,6 +65,16 @@ class Connection implements EventDispatcherAwareInterface
         if ($this->isConnected()) {
             $this->dispatch(new End('See you soon!'));
         }
+    }
+
+    public function isShutdown(): bool
+    {
+        return $this->shutdown;
+    }
+
+    public function setShutdown(bool $shutdown): void
+    {
+        $this->shutdown = $shutdown;
     }
 
     /**
@@ -78,7 +95,7 @@ class Connection implements EventDispatcherAwareInterface
     public function run(int $timeout = 0): void
     {
         if ($timeout > 0) {
-            $this->getLoop()->addTimer($timeout, function (): void {
+            $this->timers[] = $this->getLoop()->addTimer($timeout, function (): void {
                 $this->getLoop()->stop();
             });
         }
@@ -91,8 +108,18 @@ class Connection implements EventDispatcherAwareInterface
         return $this->stream !== null && $this->stream->isReadable() && $this->stream->isWritable();
     }
 
-    public function stop(): void
+    public function stop(bool $all = false): void
     {
+        if (!empty($this->timers)) {
+            $this->getLoop()->cancelTimer(array_pop($this->timers));
+
+            if ($all) {
+                while ($timer = array_pop($this->timers)) {
+                    $this->getLoop()->cancelTimer(array_pop($this->timers));
+                }
+            }
+        }
+
         $this->getLoop()->stop();
     }
 
@@ -194,6 +221,8 @@ class Connection implements EventDispatcherAwareInterface
      */
     private function connect(?int $timeout = null)
     {
+        $this->setShutdown(false);
+
         $connector = new Connector($this->getLoop(), $this->config->getContext());
         $uri = $this->config->getDsn();
 

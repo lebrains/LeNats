@@ -6,6 +6,7 @@ use JMS\Serializer\SerializerInterface;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
 use LeNats\Events\Nats\MessageReceived;
+use LeNats\Events\React\Error;
 use LeNats\Exceptions\SubscriptionException;
 use LeNats\Services\EventTypeResolver;
 use LeNats\Support\Dispatcherable;

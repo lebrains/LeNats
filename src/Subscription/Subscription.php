@@ -3,6 +3,7 @@
 namespace LeNats\Subscription;
 
 use LeNats\Support\Inbox;
+use NatsStreamingProtocol\StartPosition;
 
 class Subscription
 {
@@ -31,7 +32,7 @@ class Subscription
     private $acknowledgeWait = 30;
 
     /** @var int */
-    private $startAt = 0;
+    private $startAt = StartPosition::NewOnly;
 
     /** @var int */
     private $startMicroTime = 0;
