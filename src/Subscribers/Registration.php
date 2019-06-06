@@ -46,7 +46,7 @@ class Registration implements EventSubscriberInterface
      *
      * @return array The event names to listen to
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             NatsEvents::CONNECTED => 'handle',
@@ -58,9 +58,7 @@ class Registration implements EventSubscriberInterface
      */
     public function handle(): void
     {
-        $subscription = new Subscription(
-            Inbox::getDiscoverSubject($this->config->getClusterId())
-        );
+        $subscription = new Subscription(Inbox::getDiscoverSubject($this->config->getClusterId()));
 
         $this->connector->subscribe($subscription);
     }

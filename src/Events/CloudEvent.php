@@ -13,6 +13,13 @@ use LeNats\Subscription\Subscription;
 class CloudEvent extends Event
 {
     /**
+     * @var mixed
+     * @Serializer\Expose()
+     * @Serializer\Type("array")
+     */
+    protected $data;
+
+    /**
      * @var string
      * @Serializer\Expose()
      * @Serializer\Type("string")
@@ -41,7 +48,7 @@ class CloudEvent extends Event
     private $id;
 
     /**
-     * @var int
+     * @var int|string
      */
     private $sequenceId;
 
@@ -63,13 +70,6 @@ class CloudEvent extends Event
      * @Serializer\Type("string")
      */
     private $dataContentType = 'application/json';
-
-    /**
-     * @var mixed
-     * @Serializer\Expose()
-     * @Serializer\Type("array")
-     */
-    protected $data;
 
     public function __construct()
     {
@@ -205,17 +205,17 @@ class CloudEvent extends Event
     }
 
     /**
-     * @return int
+     * @return int|string
      */
-    public function getSequenceId(): int
+    public function getSequenceId()
     {
         return $this->sequenceId;
     }
 
     /**
-     * @param int $sequenceId
+     * @param int|string $sequenceId
      */
-    public function setSequenceId(int $sequenceId): void
+    public function setSequenceId($sequenceId): void
     {
         $this->sequenceId = $sequenceId;
     }

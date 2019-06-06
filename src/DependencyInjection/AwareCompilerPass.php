@@ -10,6 +10,9 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class AwareCompilerPass extends AbstractRecursivePass
 {
+    /**
+     * @inheritDoc
+     */
     protected function processValue($value, $isRoot = false)
     {
         $value = parent::processValue($value, $isRoot);
@@ -24,11 +27,15 @@ class AwareCompilerPass extends AbstractRecursivePass
             return $value;
         }
 
-        if ($reflection->implementsInterface(EventDispatcherAwareInterface::class) && !$value->hasMethodCall('setDispatcher')) {
+        if ($reflection->implementsInterface(EventDispatcherAwareInterface::class) && !$value->hasMethodCall(
+            'setDispatcher'
+        )) {
             $value->addMethodCall('setDispatcher', [new Reference('event_dispatcher')]);
         }
 
-        if ($reflection->implementsInterface(ContainerAwareInterface::class) && !$value->hasMethodCall('setContainer')) {
+        if ($reflection->implementsInterface(ContainerAwareInterface::class) && !$value->hasMethodCall(
+            'setContainer'
+        )) {
             $value->addMethodCall('setContainer', [new Reference('service_container')]);
         }
 

@@ -14,7 +14,7 @@ class EventTypeResolver
         $this->types = $types;
     }
 
-    public function getClass($eventType)
+    public function getClass(string $eventType): ?string
     {
         $class = null;
 

@@ -24,11 +24,9 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 {
     use Dispatcherable;
 
-    static private $commandEvents = [
-        Protocol::INFO => [
-            Info::class,
-            NatsEvents::CONNECTING,
-        ],
+    /** @var array */
+    private static $commandEvents = [
+        Protocol::INFO => [Info::class, NatsEvents::CONNECTING],
         Protocol::MSG  => [],
         Protocol::PING => [Ping::class],
         Protocol::PONG => [Pong::class],
@@ -51,11 +49,8 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
      */
     private $logger;
 
-    public function __construct(
-        BufferInterface $buffer,
-        Subscriber $subscriber,
-        ?LoggerInterface $logger = null
-    ) {
+    public function __construct(BufferInterface $buffer, Subscriber $subscriber, ?LoggerInterface $logger = null)
+    {
         $this->buffer = $buffer;
         $this->subscriber = $subscriber;
         $this->logger = $logger;
@@ -122,7 +117,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 
                         $subscription = $this->subscriber->getSubscription($message[0]);
 
-                        $this->dispatch($message[0], new MessageReceived($subscription, $message[1]));
+                        $this->dispatch(new MessageReceived($subscription, $message[1]), $message[0]);
                     } catch (SubscriptionNotFoundException $e) {
                         // ignore
                     } catch (NatsException $e) {
@@ -155,9 +150,9 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
     }
 
     /**
-     * @param string $rawMessage
-     * @return array
+     * @param  string          $rawMessage
      * @throws StreamException
+     * @return array
      */
     private function getFullMessage(string $rawMessage): array
     {

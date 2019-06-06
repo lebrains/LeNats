@@ -23,13 +23,15 @@ services:
   LeNats\Subscription\Publisher:
     autowire: true
     public: true
+    arguments:
+      $suffixes: '%lenats.event.suffixes%'
 
   LeNats\Subscription\Connector:
     autowire: true
 
   LeNats\Services\EventTypeResolver:
     arguments:
-      - '%lenats.types%'
+      - '%lenats.event.types%'
 
   LeNats\Services\Configuration:
     arguments:

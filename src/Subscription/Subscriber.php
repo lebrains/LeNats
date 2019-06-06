@@ -2,7 +2,6 @@
 
 namespace LeNats\Subscription;
 
-use Closure;
 use Exception;
 use Google\Protobuf\Internal\Message;
 use LeNats\Contracts\EventDispatcherAwareInterface;
@@ -16,9 +15,9 @@ use LeNats\Support\Dispatcherable;
 use LeNats\Support\Inbox;
 use NatsStreamingProtocol\Ack;
 use NatsStreamingProtocol\SubscriptionRequest;
+use function React\Promise\all;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
-use function React\Promise\all;
 
 class Subscriber extends MessageStreamer implements EventDispatcherAwareInterface, ContainerAwareInterface
 {
@@ -29,20 +28,20 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
     /** @var string */
     protected const RESPONSE_LISTENER = SubscriptionResponseListener::class;
 
-    /** @var Subscription[] */
-    private static $subscriptions = [];
-
     /**
      * @var Configuration
      */
     protected $config;
 
+    /** @var Subscription[] */
+    private static $subscriptions = [];
+
     /**
-     * @param Subscription $subscription
-     * @param callable|null $onSuccess
-     * @return static
+     * @param  Subscription    $subscription
+     * @param  callable|null   $onSuccess
      * @throws StreamException
      * @throws Exception
+     * @return static
      */
     public function subscribe(Subscription $subscription, ?callable $onSuccess = null): self
     {
@@ -53,7 +52,7 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
 
         $this->registerListener($subscription->getSid(), static::MESSAGE_LISTENER, 100);
         $promises[] = $this->send($subscription->getInbox(), $subscription->getSid())
-            ->then(function () use ($subscription) {
+            ->then(function () use ($subscription): void {
                 if ($subscription->getMessageLimit()) {
                     $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
                 }
@@ -64,12 +63,12 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         $sid = $this->generator->generateString(16);
         $this->storeSubscription($subscription, $sid);
 
-        $promises[] = $this->send($requestInbox, $sid)->then(function () use ($sid) {
+        $promises[] = $this->send($requestInbox, $sid)->then(function () use ($sid): void {
             $this->unsubscribe($sid, 1);
         });
 
         $this->registerListener($sid, static::RESPONSE_LISTENER);
-        $this->registerListener($sid, function () use ($sid) {
+        $this->registerListener($sid, function () use ($sid): void {
             $this->remove($sid);
         });
 
@@ -83,40 +82,19 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
             $onSuccess($subscription);
         }
 
-        all($promises)->then(function () use ($subscription) {
+        all($promises)->then(function () use ($subscription): void {
             $this->run($subscription->getTimeout());
         });
 
         return $this;
     }
 
-    protected function storeSubscription(Subscription $subscription, string $sid = null)
-    {
-        self::$subscriptions[$sid ?? $subscription->getSid()] = $subscription;
-    }
-
     /**
-     * @param string $sid
-     * @param string|callable $handler
-     * @param int $priority
-     */
-    protected function registerListener(string $sid, $handler, int $priority = 0): void
-    {
-        if ($handler instanceof Closure) {
-            $listener = $handler;
-        } else {
-            $listener = [$this->container->get($handler), 'handle'];
-        }
-
-        $this->dispatcher->addListener($sid, $listener, $priority);
-    }
-
-    /**
-     * @param string $sid
-     * @param string|null $eventName
+     * @param  string          $sid
+     * @param  string|null     $eventName
      * @throws StreamException
      */
-    public function remove(string $sid, ?string $eventName = null)
+    public function remove(string $sid, ?string $eventName = null): void
     {
         if (empty(self::$subscriptions[$sid])) {
             return;
@@ -136,32 +114,8 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         }
     }
 
-    protected function getPublishSubject(Subscription $subscription): string
-    {
-        return $this->config->getSubRequests();
-    }
-
-    protected function getRequest(Subscription $subscription): Message
-    {
-        $request = new SubscriptionRequest();
-
-        $request->setSubject($subscription->getSubject());
-        if ($subscription->getGroup()) {
-            $request->setQGroup($subscription->getGroup());
-        }
-
-        $request->setClientID($this->config->getClientId());
-        $request->setAckWaitInSecs($subscription->getAcknowledgeWait());
-        $request->setMaxInFlight(1024);
-        $request->setDurableName($this->config->getClientId());
-        $request->setInbox($subscription->getInbox());
-        $request->setStartPosition($subscription->getStartAt());
-
-        return $request;
-    }
-
     /**
-     * @param CloudEvent $event
+     * @param  CloudEvent      $event
      * @throws StreamException
      */
     public function acknowledge(CloudEvent $event): void
@@ -177,11 +131,11 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
     }
 
     /**
-     * @param $sid
-     * @return Subscription
+     * @param  string                        $sid
      * @throws SubscriptionNotFoundException
+     * @return Subscription
      */
-    public function getSubscription($sid): Subscription
+    public function getSubscription(string $sid): Subscription
     {
         $subscription = self::$subscriptions[$sid] ?? null;
 
@@ -204,5 +158,50 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         }
 
         $this->getConnection()->run(5);
+    }
+
+    protected function storeSubscription(Subscription $subscription, ?string $sid = null): void
+    {
+        self::$subscriptions[$sid ?? $subscription->getSid()] = $subscription;
+    }
+
+    /**
+     * @param string          $sid
+     * @param string|callable $handler
+     * @param int             $priority
+     */
+    protected function registerListener(string $sid, $handler, int $priority = 0): void
+    {
+        if (is_callable($handler)) {
+            $listener = $handler;
+        } else {
+            $listener = [$this->container->get($handler), 'handle'];
+        }
+
+        $this->dispatcher->addListener($sid, $listener, $priority);
+    }
+
+    protected function getPublishSubject(Subscription $subscription): string
+    {
+        return $this->config->getSubRequests();
+    }
+
+    protected function getRequest(Subscription $subscription): Message
+    {
+        $request = new SubscriptionRequest();
+
+        $request->setSubject($subscription->getSubject());
+        if (!empty($subscription->getGroup())) {
+            $request->setQGroup($subscription->getGroup());
+        }
+
+        $request->setClientID($this->config->getClientId());
+        $request->setAckWaitInSecs($subscription->getAcknowledgeWait());
+        $request->setMaxInFlight(1024);
+        $request->setDurableName($this->config->getClientId());
+        $request->setInbox($subscription->getInbox());
+        $request->setStartPosition($subscription->getStartAt());
+
+        return $request;
     }
 }

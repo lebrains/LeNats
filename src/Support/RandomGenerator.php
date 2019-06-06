@@ -9,10 +9,10 @@ class RandomGenerator
     /**
      * A simple wrapper on random_bytes.
      *
-     * @param integer $length Length of the string.
+     * @param int $length Length of the string.
      *
-     * @return string Random string.
      * @throws Exception
+     * @return string    Random string.
      */
     public function generateString(int $length): string
     {

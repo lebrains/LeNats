@@ -1,0 +1,21 @@
+services:
+  PhpCsFixer\Fixer\Phpdoc\AlignMultilineCommentFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\NoBlankLinesAfterPhpdocFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocAddMissingParamAnnotationFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocAlignFixer:
+    align: vertical
+  PhpCsFixer\Fixer\Phpdoc\PhpdocIndentFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocOrderFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocScalarFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocSingleLineVarSpacingFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocSummaryFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocVarAnnotationCorrectOrderFixer: ~
+  PhpCsFixer\Fixer\Phpdoc\PhpdocVarWithoutNameFixer: ~
+  Symplify\CodingStandard\Sniffs\Debug\CommentedOutCodeSniff: ~
+  Symplify\CodingStandard\Fixer\Commenting\RemoveEndOfFunctionCommentFixer: ~
+  Symplify\CodingStandard\Sniffs\Commenting\AnnotationTypeExistsSniff: ~
+  Symplify\CodingStandard\Fixer\Commenting\ParamReturnAndVarTagMalformsFixer: ~
+  Symplify\CodingStandard\Fixer\Commenting\RemoveEmptyDocBlockFixer: ~
+  Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousDocBlockWhitespaceFixer: ~

@@ -2,10 +2,8 @@
 
 namespace LeNats\Commands;
 
-use Exception;
 use LeNats\Subscription\Subscriber;
 use LeNats\Subscription\Subscription;
-use LeNats\Subscription\SubscriptionFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class SubscribeCommand extends Command
 {
+    /** @var string */
     protected static $defaultName = 'nats:subscribe';
 
     /**
@@ -21,14 +20,14 @@ class SubscribeCommand extends Command
      */
     private $subscriber;
 
-    public function __construct(string $name = null, Subscriber $subscriber)
+    public function __construct(Subscriber $subscriber)
     {
-        parent::__construct($name);
+        parent::__construct();
 
         $this->subscriber = $subscriber;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -38,18 +37,37 @@ class SubscribeCommand extends Command
             ->setHelp('bin/console nats:subscribe your.queue.name [-t timeout]');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
-        $subscription = new Subscription($input->getArgument('queue'));
-        $subscription->setTimeout($input->getOption('timeout'));
+        $queue = $input->getArgument('queue');
+        $timeout = $input->getOption('timeout');
+
+        if ($queue === null || is_array($queue)) {
+            $output->write('Argument `queue` must be type of string');
+
+            return 1;
+        }
+
+        if ($timeout === null || is_array($timeout)) {
+            $output->write('Argument `timeout` must be type of int');
+
+            return 1;
+        }
+
+        $subscription = new Subscription((string)$queue);
+        $subscription->setTimeout((int)$timeout);
 
         try {
             $this->subscriber->subscribe($subscription)->run();
 
             $output->write('Received:' . $subscription->getReceived(), true);
             $output->write('Processed:' . $subscription->getProcessed(), true);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $output->write('Finished with exception:' . $e->getMessage());
+
+            return 1;
         }
+
+        return null;
     }
 }

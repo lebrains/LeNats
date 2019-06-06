@@ -21,21 +21,15 @@ trait Dispatcherable
     }
 
     /**
-     * @param string|Event $event
-     * @param Event $eventObject
+     * @param Event|string $eventObject
+     * @param string|null  $eventName
      */
-    public function dispatch($event, ?Event $eventObject = null): void
+    public function dispatch($eventObject, ?string $eventName = null): void
     {
-        $eventName = $event;
-
-        if (is_object($event)) {
-            $eventName = get_class($event);
-
-            if ($event instanceof Event) {
-                $eventObject = $event;
-            }
+        if (is_string($eventObject)) {
+            [$eventName, $eventObject] = [$eventObject, new Event()];
         }
 
-        $this->dispatcher->dispatch($eventName, $eventObject);
+        $this->dispatcher->dispatch($eventObject, $eventName);
     }
 }

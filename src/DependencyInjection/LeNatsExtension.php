@@ -13,16 +13,23 @@ class LeNatsExtension extends Extension
 {
     /**
      * Loads a specific configuration.
+     * @inheritDoc
      *
      * @throws InvalidArgumentException When provided tag is not defined in this extension
      * @throws Exception
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
 
-        $config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
+        $configuration = $this->getConfiguration($configs, $container);
+
+        if ($configuration === null) {
+            throw  new Exception('Can\'t process configuration');
+        }
+
+        $config = $this->processConfiguration($configuration, $configs);
 
         $this->defineConfigurationService($config, $container);
     }
@@ -30,6 +37,7 @@ class LeNatsExtension extends Extension
     private function defineConfigurationService(array $config, ContainerBuilder $container): void
     {
         $container->setParameter('lenats.configuration', $config['connection']);
-        $container->setParameter('lenats.types', $config['accept_events'] ?? []);
+        $container->setParameter('lenats.event.types', $config['accept_events'] ?? []);
+        $container->setParameter('lenats.event.suffixes', $config['event_suffixes'] ?? []);
     }
 }

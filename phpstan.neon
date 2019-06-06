@@ -1,0 +1,17 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - ./phpstan.ignore.neon
+parameters:
+    level: 7
+    autoload_files:
+        - phpstan-autoload.php
+    excludes_analyse:
+        - docker
+        - var
+        - vendor
+        - tests
+        - phpstan-autoload.php
+    fileExtensions:
+        - php
+    symfony:
+        container_xml_path: './var/cache/dev/srcLeNats_KernelDevDebugContainer.xml'

@@ -2,13 +2,12 @@
 
 namespace LeNats\Listeners;
 
-use Exception;
+use JMS\Serializer\SerializerInterface;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
 use LeNats\Events\Nats\MessageReceived;
 use LeNats\Exceptions\SubscriptionException;
 use LeNats\Services\EventTypeResolver;
-use LeNats\Services\Serializer;
 use LeNats\Support\Dispatcherable;
 use NatsStreamingProtocol\MsgProto;
 
@@ -17,7 +16,7 @@ class SubscriptionListener implements EventDispatcherAwareInterface
     use Dispatcherable;
 
     /**
-     * @var Serializer
+     * @var SerializerInterface
      */
     private $serializer;
 
@@ -26,14 +25,14 @@ class SubscriptionListener implements EventDispatcherAwareInterface
      */
     private $typeResolver;
 
-    public function __construct(Serializer $serializer, EventTypeResolver $typeResolver)
+    public function __construct(SerializerInterface $serializer, EventTypeResolver $typeResolver)
     {
         $this->serializer = $serializer;
         $this->typeResolver = $typeResolver;
     }
 
     /**
-     * @param MessageReceived $event
+     * @param  MessageReceived       $event
      * @throws SubscriptionException
      */
     public function handle(MessageReceived $event): void
@@ -41,7 +40,7 @@ class SubscriptionListener implements EventDispatcherAwareInterface
         $message = new MsgProto();
         try {
             $message->mergeFromString($event->payload);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             throw new SubscriptionException($e->getMessage());
         }
 
@@ -66,6 +65,6 @@ class SubscriptionListener implements EventDispatcherAwareInterface
 
         $event->subscription->incrementReceived();
 
-        $this->dispatch($cloudEvent->getType(), $cloudEvent);
+        $this->dispatch($cloudEvent, $cloudEvent->getType());
     }
 }

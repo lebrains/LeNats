@@ -24,7 +24,7 @@ class StringBuffer implements BufferInterface
     {
         $start = $start ?? 0;
 
-        return $length ? substr($this->buffer, $start, $length) : $this->buffer;
+        return $length ? mb_substr($this->buffer, $start, $length) : $this->buffer;
     }
 
     public function isEmpty(): bool
@@ -43,7 +43,7 @@ class StringBuffer implements BufferInterface
         $this->position = 0;
     }
 
-    public function getLine(): string
+    public function getLine(): ?string
     {
         if (!$this->position) {
             $this->position = 0;
@@ -57,6 +57,7 @@ class StringBuffer implements BufferInterface
 
         if (!$line) {
             $this->resetPosition();
+            $line = null;
         }
 
         return $line;
@@ -73,4 +74,3 @@ class StringBuffer implements BufferInterface
         $this->resetPosition();
     }
 }
-

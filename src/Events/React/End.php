@@ -7,7 +7,7 @@ use LeNats\Events\Event;
 class End extends Event
 {
     /**
-     * @var string
+     * @var string|null
      */
     public $message;
 

@@ -39,7 +39,7 @@ class ReactEventSubscriber implements EventSubscriberInterface
     /**
      * @return array The event names to listen to
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             Error::class => 'onError',
@@ -62,6 +62,31 @@ class ReactEventSubscriber implements EventSubscriberInterface
         $this->connection->stop();
     }
 
+    public function onEnd(End $event): void
+    {
+        $this->gracefulShutdown();
+
+        $this->verboseLog('END. ' . $event->message);
+    }
+
+    /**
+     * @param  Error         $event
+     * @throws NatsException
+     */
+    public function onError(Error $event): void
+    {
+        $this->gracefulShutdown();
+
+        $this->verboseLog('ERROR. ' . $event->error);
+
+        throw new NatsException($event->error);
+    }
+
+    public function onPong(Pong $event): void
+    {
+        $this->verboseLog('PONG handled');
+    }
+
     private function gracefulShutdown(): void
     {
         if ($this->connection->isConnected()) {
@@ -79,30 +104,5 @@ class ReactEventSubscriber implements EventSubscriberInterface
         if ($this->logger && getenv('APP_ENV') === 'dev') {
             $this->logger->info($message);
         }
-    }
-
-    public function onEnd(End $event): void
-    {
-        $this->gracefulShutdown();
-
-        $this->verboseLog('END. ' . $event->message);
-    }
-
-    /**
-     * @param Error $event
-     * @throws NatsException
-     */
-    public function onError(Error $event): void
-    {
-        $this->gracefulShutdown();
-
-        $this->verboseLog('ERROR. ' . $event->error);
-
-        throw new NatsException($event->error);
-    }
-
-    public function onPong(Pong $event): void
-    {
-        $this->verboseLog('PONG handled');
     }
 }

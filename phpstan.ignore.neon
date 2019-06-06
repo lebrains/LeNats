@@ -1,0 +1,7 @@
+parameters:
+    ignoreErrors:
+        - '#Method Symfony\\Contracts\\EventDispatcher\\EventDispatcherInterface::dispatch\(\) invoked with 2 parameters, 1 required.#'
+        - '#Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::children\(\).#'
+        - '#Parameter(.*)\$listener of method Symfony\\Component\\EventDispatcher\\EventDispatcherInterface::addListener\(\) expects callable\(\): mixed,(.*)given.#'
+        - '#Strict comparison using === between React\\Promise\\PromiseInterface and null will always evaluate to false.#'
+        - '#Call to function method_exists\(\) with .{1}Symfony\\\\Component….{1} and .{1}getRootNode.{1} will always evaluate to false.#'

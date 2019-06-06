@@ -7,7 +7,7 @@ use LeNats\Subscription\Subscription;
 
 class MessageReceived extends Event
 {
-    /** @var mixed */
+    /** @var string */
     public $payload;
 
     /**
@@ -15,7 +15,7 @@ class MessageReceived extends Event
      */
     public $subscription;
 
-    public function __construct(Subscription $subscription, $payload)
+    public function __construct(Subscription $subscription, string $payload)
     {
         $this->subscription = $subscription;
         $this->payload = $payload;

@@ -12,7 +12,7 @@ interface BufferInterface
 
     public function resetPosition(): void;
 
-    public function getLine(): string;
+    public function getLine(): ?string;
 
     public function acknowledge(string $line): void;
 

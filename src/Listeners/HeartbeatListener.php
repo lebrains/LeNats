@@ -19,7 +19,7 @@ class HeartbeatListener
     }
 
     /**
-     * @param MessageReceived $event
+     * @param  MessageReceived $event
      * @throws StreamException
      */
     public function handle(MessageReceived $event): void

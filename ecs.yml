@@ -1,0 +1,85 @@
+imports:
+  - { resource: 'vendor/symplify/easy-coding-standard/config/php71.yml' }
+  - { resource: 'vendor/symplify/easy-coding-standard/config/psr2.yml' }
+  - { resource: 'vendor/symplify/easy-coding-standard/config/psr12.yml' }
+  - { resource: 'ecs-comment.yml' }
+
+services:
+  PhpCsFixer\Fixer\Alias\NoAliasFunctionsFixer: ~
+  PhpCsFixer\Fixer\Alias\MbStrFunctionsFixer: ~
+  PhpCsFixer\Fixer\Alias\RandomApiMigrationFixer: ~
+
+  PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer:
+    syntax: short
+  PhpCsFixer\Fixer\ArrayNotation\NoMultilineWhitespaceAroundDoubleArrowFixer: ~
+  PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer: ~
+  PhpCsFixer\Fixer\ArrayNotation\NoWhitespaceBeforeCommaInArrayFixer: ~
+  PhpCsFixer\Fixer\ArrayNotation\TrailingCommaInMultilineArrayFixer: ~
+  PhpCsFixer\Fixer\ArrayNotation\TrimArraySpacesFixer: ~
+  PhpCsFixer\Fixer\ArrayNotation\WhitespaceAfterCommaInArrayFixer: ~
+
+  PhpCsFixer\Fixer\Basic\BracesFixer: ~
+  PhpCsFixer\Fixer\Basic\Psr4Fixer: ~
+
+  PhpCsFixer\Fixer\CastNotation\CastSpacesFixer:
+    space: 'none'
+  PhpCsFixer\Fixer\ClassNotation\OrderedClassElementsFixer: ~
+  PhpCsFixer\Fixer\ClassNotation\ProtectedToPrivateFixer: ~
+
+  PhpCsFixer\Fixer\ControlStructure\NoUselessElseFixer: ~
+  PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer:
+    equal: false
+    identical: false
+    less_and_greater: false
+
+  PhpCsFixer\Fixer\FunctionNotation\ImplodeCallFixer: ~
+  PhpCsFixer\Fixer\FunctionNotation\NoUnreachableDefaultArgumentValueFixer: ~
+  PhpCsFixer\Fixer\FunctionNotation\PhpdocToReturnTypeFixer: ~
+  PhpCsFixer\Fixer\FunctionNotation\StaticLambdaFixer: ~
+  PhpCsFixer\Fixer\FunctionNotation\VoidReturnFixer: ~
+
+  PhpCsFixer\Fixer\Import\NoUnusedImportsFixer: ~
+  PhpCsFixer\Fixer\Import\OrderedImportsFixer: ~
+
+  PhpCsFixer\Fixer\NamespaceNotation\BlankLineAfterNamespaceFixer: ~
+  PhpCsFixer\Fixer\NamespaceNotation\NoLeadingNamespaceWhitespaceFixer: ~
+  PhpCsFixer\Fixer\NamespaceNotation\SingleBlankLineBeforeNamespaceFixer: ~
+
+  PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer:
+    align_double_arrow: true
+  PhpCsFixer\Fixer\Operator\ConcatSpaceFixer:
+    spacing: 'one'
+  PhpCsFixer\Fixer\Operator\TernaryToNullCoalescingFixer: ~
+
+  PhpCsFixer\Fixer\StringNotation\SingleQuoteFixer: ~
+
+  PhpCsFixer\Fixer\ReturnNotation\NoUselessReturnFixer: ~
+  PhpCsFixer\Fixer\ReturnNotation\ReturnAssignmentFixer: ~
+
+  PhpCsFixer\Fixer\Whitespace\ArrayIndentationFixer: ~
+  PhpCsFixer\Fixer\Whitespace\BlankLineBeforeStatementFixer:
+    statements: ['return']
+  PhpCsFixer\Fixer\Whitespace\IndentationTypeFixer: ~
+  PhpCsFixer\Fixer\Whitespace\LineEndingFixer: ~
+  PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer: ~
+  PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer: ~
+  PhpCsFixer\Fixer\Whitespace\NoSpacesAroundOffsetFixer: ~
+  PhpCsFixer\Fixer\Whitespace\NoSpacesInsideParenthesisFixer: ~
+  PhpCsFixer\Fixer\Whitespace\NoTrailingWhitespaceFixer: ~
+  PhpCsFixer\Fixer\Whitespace\NoWhitespaceInBlankLineFixer: ~
+  PhpCsFixer\Fixer\Whitespace\SingleBlankLineAtEofFixer: ~
+
+  Symplify\CodingStandard\Fixer\ArrayNotation\StandaloneLineInMultilineArrayFixer: ~
+  Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer: ~
+  Symplify\CodingStandard\Sniffs\Debug\DebugFunctionCallSniff: ~
+
+parameters:
+  skip:
+    SlevomatCodingStandard\Sniffs\TypeHints\TypeHintDeclarationSniff.MissingTraversableReturnTypeHintSpecification: ~
+    SlevomatCodingStandard\Sniffs\TypeHints\TypeHintDeclarationSniff.MissingTraversableParameterTypeHintSpecification: ~
+    SlevomatCodingStandard\Sniffs\TypeHints\TypeHintDeclarationSniff.MissingTraversablePropertyTypeHintSpecification: ~
+    PhpCsFixer\Fixer\Strict\DeclareStrictTypesFixer: ~
+  exclude_files:
+    - '/var/*'
+    - '/vendor/*'
+    - '/phpstan-autoload.php'

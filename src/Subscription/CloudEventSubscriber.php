@@ -17,7 +17,7 @@ abstract class CloudEventSubscriber implements EventSubscriberInterface
         $this->subscriber = $subscriber;
     }
 
-    protected function acknowledge(CloudEvent $event)
+    protected function acknowledge(CloudEvent $event): void
     {
         $this->subscriber->acknowledge($event);
     }

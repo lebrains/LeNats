@@ -29,7 +29,7 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
     /**
      * @return array The event names to listen to
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             NatsEvents::CONNECTING => 'authorize',
@@ -54,16 +54,24 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
             'pass'     => $config->getPass(),
         ];
 
-        $this->connection->write(Protocol::CONNECT, json_encode($auth))
-            ->then(function () {
-                $this->connection->ping()
-                    ->then(function () {
-                        $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
-                    });
-            })
-            ->otherwise(static function () {
-                throw new ConnectionException('Not connected');
-            });
+        $payload = json_encode($auth);
+
+        if (!$payload) {
+            throw new ConnectionException('Authorization payload invalid');
+        }
+
+        $this->connection->write(Protocol::CONNECT, $payload)
+            ->then(
+                function (): void {
+                    $this->connection->ping()
+                        ->then(function (): void {
+                            $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
+                        });
+                },
+                static function (): void {
+                    throw new ConnectionException('Not connected');
+                }
+            );
 
         $this->connection->run();
     }

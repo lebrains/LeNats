@@ -20,9 +20,9 @@ use React\Promise\FulfilledPromise;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use React\Promise\RejectedPromise;
+use function React\Promise\Timer\timeout;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
-use function React\Promise\Timer\timeout;
 
 class Connection implements EventDispatcherAwareInterface
 {
@@ -53,8 +53,15 @@ class Connection implements EventDispatcherAwareInterface
         $this->logger = $logger;
     }
 
+    public function __destruct()
+    {
+        if ($this->isConnected()) {
+            $this->dispatch(new End('See you soon!'));
+        }
+    }
+
     /**
-     * @param int|null $timeout
+     * @param  int|null            $timeout
      * @throws ConnectionException
      */
     public function open(?int $timeout = null): void
@@ -68,10 +75,10 @@ class Connection implements EventDispatcherAwareInterface
         }
     }
 
-    public function run(?int $timeout = null): void
+    public function run(int $timeout = 0): void
     {
         if ($timeout > 0) {
-            $this->getLoop()->addTimer($timeout, function () {
+            $this->getLoop()->addTimer($timeout, function (): void {
                 $this->getLoop()->stop();
             });
         }
@@ -95,22 +102,22 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @return Promise
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
-    public function ping(): Promise
+    public function ping()
     {
         return $this->write(Protocol::PING);
     }
 
     /**
-     * @param string $method
-     * @param string|array|null $params
-     * @param string|ProtoMessage|null $payload
-     * @return Promise
+     * @param  string                   $method
+     * @param  string|array|null        $params
+     * @param  string|null              $payload
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
-    public function write(string $method, $params = null, $payload = null): Promise
+    public function write(string $method, $params = null, ?string $payload = null)
     {
         if (!in_array($method, Protocol::getClientMethods(), true)) {
             throw new StreamException('Method not exists: ' . $method);
@@ -128,7 +135,7 @@ class Connection implements EventDispatcherAwareInterface
             if ($payload !== null) {
                 $message .= Protocol::SPC;
 
-                $message .= strlen($payload) . Protocol::CR_LF . $payload;
+                $message .= mb_strlen($payload) . Protocol::CR_LF . $payload;
             }
         }
 
@@ -140,7 +147,7 @@ class Connection implements EventDispatcherAwareInterface
 
         $deferred = new Deferred();
 
-        $this->getLoop()->futureTick(function () use ($message, $deferred) {
+        $this->getLoop()->futureTick(function () use ($message, $deferred): void {
             $result = $this->stream->write($message);
 
             if ($result) {
@@ -154,16 +161,15 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param string $subject
-     * @param null $payload
-     * @param null $inbox
-     * @return Promise
+     * @param  string                   $subject
+     * @param  string|ProtoMessage|null $payload
+     * @param  string|null              $inbox
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
-    public function publish(string $subject, $payload = null, $inbox = null): Promise
+    public function publish(string $subject, $payload = null, ?string $inbox = null)
     {
         $params = [$subject];
-        $payload = $payload ?? '';
 
         if ($inbox) {
             $params[] = $inbox;
@@ -181,35 +187,31 @@ class Connection implements EventDispatcherAwareInterface
         $this->stream->close();
     }
 
-    public function __destruct()
-    {
-        if ($this->isConnected()) {
-            $this->dispatch(new End('See you soon!'));
-        }
-    }
-
     /**
-     * @param int|null $timeout
-     * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
+     * @param  int|null                                                            $timeout
      * @throws ConnectionException
+     * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
      */
     private function connect(?int $timeout = null)
     {
         $connector = new Connector($this->getLoop(), $this->config->getContext());
         $uri = $this->config->getDsn();
 
-        if (!($connectionPromise = $connector->connect($uri))) {
+        $connectionPromise = $connector->connect($uri);
+
+        if ($connectionPromise === null) {
             throw new ConnectionException('Can`t connect');
         }
 
-        $connectionPromise->then(function (ConnectionInterface $connection) {
-            $this->stream = $connection;
-            $this->forwardEvents();
-        });
-
-        $connectionPromise->otherwise(static function ($reason) {
-            throw new ConnectionException($reason);
-        });
+        $connectionPromise->then(
+            function (ConnectionInterface $connection): void {
+                $this->stream = $connection;
+                $this->forwardEvents();
+            },
+            static function ($reason): void {
+                throw new ConnectionException($reason);
+            }
+        );
 
         if ($timeout) {
             $timeoutPromise = timeout($connectionPromise, $timeout, $this->getLoop());
@@ -220,7 +222,7 @@ class Connection implements EventDispatcherAwareInterface
 
     private function getLoop(): LoopInterface
     {
-        if ($this->loop) {
+        if ($this->loop !== null) {
             return $this->loop;
         }
 
@@ -229,19 +231,19 @@ class Connection implements EventDispatcherAwareInterface
 
     private function forwardEvents(): void
     {
-        $this->stream->on('data', function ($data) {
+        $this->stream->on('data', function ($data): void {
             $this->dispatch(new Data($data));
         });
 
-        $this->stream->on('end', function () {
+        $this->stream->on('end', function (): void {
             $this->dispatch(new End());
         });
 
-        $this->stream->on('error', function ($error) {
+        $this->stream->on('error', function ($error): void {
             $this->dispatch(new Error($error));
         });
 
-        $this->stream->on('close', function () {
+        $this->stream->on('close', function (): void {
             $this->dispatch(new Close());
         });
     }

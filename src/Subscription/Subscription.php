@@ -15,7 +15,7 @@ class Subscription
     /** @var string */
     private $sid;
 
-    /** @var string|null */
+    /** @var string */
     private $subject;
 
     /** @var string */
@@ -24,8 +24,8 @@ class Subscription
     /** @var bool */
     private $startWaiting = false;
 
-    /** @var null|int */
-    private $timeout;
+    /** @var int */
+    private $timeout = 0;
 
     /** @var int */
     private $acknowledgeWait = 30;
@@ -45,7 +45,7 @@ class Subscription
     /** @var string */
     private $acknowledgeInbox;
 
-    public function __construct($subject, ?array $options = null)
+    public function __construct(string $subject, ?array $options = null)
     {
         $options = $options ?? [];
 
@@ -110,15 +110,15 @@ class Subscription
     }
 
     /**
-     * @return int|null
+     * @return int
      */
-    public function getTimeout(): ?int
+    public function getTimeout(): int
     {
         return $this->timeout;
     }
 
     /**
-     * @param int|null $timeout
+     * @param int $timeout
      */
     public function setTimeout(int $timeout): void
     {
@@ -144,17 +144,17 @@ class Subscription
     }
 
     /**
-     * @return int|null
+     * @return int
      */
-    public function getStartAt(): ?int
+    public function getStartAt(): int
     {
         return $this->startAt;
     }
 
     /**
-     * @param int|null $startAt
+     * @param int $startAt
      */
-    public function setStartAt(?int $startAt): void
+    public function setStartAt(int $startAt): void
     {
         $this->startAt = $startAt;
     }
@@ -197,7 +197,7 @@ class Subscription
     }
 
     /**
-     * @param int|null $messageLimit
+     * @param int $messageLimit
      */
     public function setMessageLimit(int $messageLimit): void
     {
