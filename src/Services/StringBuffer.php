@@ -65,7 +65,7 @@ class StringBuffer implements BufferInterface
 
     public function acknowledge(string $line): void
     {
-        $this->buffer = ltrim(mb_substr($this->buffer, mb_strlen($line)), $this->eol);
+        $this->buffer = ltrim(substr($this->buffer, strlen($line)), $this->eol);
     }
 
     public function clear(): void
