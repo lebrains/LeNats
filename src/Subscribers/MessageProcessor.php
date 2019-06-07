@@ -170,7 +170,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
         $payload = '';
 
         if ($length > 0) {
-            $payload = $buffer->get($length, strlen($rawMessage) + strlen(Protocol::CR_LF));
+            $payload = $buffer->get($length, mb_strlen($rawMessage) + mb_strlen(Protocol::CR_LF));
             $buffer->resetPosition();
         }
 

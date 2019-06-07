@@ -91,7 +91,7 @@ class Publisher extends MessageStreamer
             });
         }
 
-        $promise->then(function () use($guid): void {
+        $promise->then(function () use ($guid): void {
             $this->getConnection()->stopTimer($guid);
         });
 

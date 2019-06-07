@@ -41,13 +41,45 @@ class SubscribeCommand extends Command
 
         $this->addArgument('queue', InputArgument::REQUIRED, 'Nats queue name')
             ->addOption('timeout', 't', InputOption::VALUE_OPTIONAL, 'Subscription time out (default: 60)', 60)
-            ->addOption('start-position', 'p', InputOption::VALUE_OPTIONAL,
-                'Start position (0 - new only, 1 - last received, 2 - time delta start, 3 - from specific sequence position, 4 - from first)', 0)
-            ->addOption('start-sequence', 'i', InputOption::VALUE_OPTIONAL, 'Start sequence number (required if start-position = 3)')
-            ->addOption('start-time', 's', InputOption::VALUE_OPTIONAL, 'Time delta start (required if start-position = 2)')
-            ->addOption('max-in-flight', 'f', InputOption::VALUE_OPTIONAL, 'Maximum inflight messages without an ack allowed', 1024)
-            ->addOption('group', 'g', InputOption::VALUE_OPTIONAL, 'Group name (if needs to processing one queue in several process with on clientID)')
-            ->addOption('ack-wait', 'a', InputOption::VALUE_OPTIONAL, 'Timeout for receiving an ack from the client', 30)
+            ->addOption(
+                'start-position',
+                'p',
+                InputOption::VALUE_OPTIONAL,
+                'Start position (0 - new only, 1 - last received, 2 - time delta start, 3 - from specific sequence position, 4 - from first)',
+                0
+            )
+            ->addOption(
+                'start-sequence',
+                'i',
+                InputOption::VALUE_OPTIONAL,
+                'Start sequence number (required if start-position = 3)'
+            )
+            ->addOption(
+                'start-time',
+                's',
+                InputOption::VALUE_OPTIONAL,
+                'Time delta start (required if start-position = 2)'
+            )
+            ->addOption(
+                'max-in-flight',
+                'f',
+                InputOption::VALUE_OPTIONAL,
+                'Maximum inflight messages without an ack allowed',
+                1024
+            )
+            ->addOption(
+                'group',
+                'g',
+                InputOption::VALUE_OPTIONAL,
+                'Group name (if needs to processing one queue in several process with on clientID)'
+            )
+            ->addOption(
+                'ack-wait',
+                'a',
+                InputOption::VALUE_OPTIONAL,
+                'Timeout for receiving an ack from the client',
+                30
+            )
             ->setDescription('Subscribes to queue and dispatches events to your application')
             ->setHelp('bin/console nats:subscribe your.queue.name [-t timeout]');
     }
@@ -82,8 +114,11 @@ class SubscribeCommand extends Command
         return null;
     }
 
-    private function configureSubscription(Subscription $subscription, InputInterface $input, OutputInterface $output): bool
-    {
+    private function configureSubscription(
+        Subscription $subscription,
+        InputInterface $input,
+        OutputInterface $output
+    ): bool {
         $validation = $this->validator->validate($input->getOptions(), [
             'timeout'        => 'integer|min:0',
             'start-position' => 'integer|in:0,1,2,3,4',

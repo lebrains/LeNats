@@ -22,9 +22,9 @@ use React\Promise\FulfilledPromise;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use React\Promise\RejectedPromise;
+use function React\Promise\Timer\timeout;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
-use function React\Promise\Timer\timeout;
 
 class Connection implements EventDispatcherAwareInterface
 {
@@ -82,10 +82,10 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param int|null $timeout
+     * @param  int            $timeout
      * @throws ConnectionException
      */
-    public function open(?int $timeout = null): void
+    public function open(int $timeout): void
     {
         $this->connect($timeout);
 
@@ -98,7 +98,7 @@ class Connection implements EventDispatcherAwareInterface
 
     public function runTimer(string $timerName, int $timeout): void
     {
-        $this->timers[$timerName] = $this->getLoop()->addTimer($timeout, function () use ($timerName) {
+        $this->timers[$timerName] = $this->getLoop()->addTimer($timeout, function () use ($timerName): void {
             $this->stopTimer($timerName);
         });
 
@@ -153,8 +153,8 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @return PromiseInterface|Promise
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
     public function ping()
     {
@@ -162,11 +162,11 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param string $method
-     * @param string|array|null $params
-     * @param string|null $payload
-     * @return PromiseInterface|Promise
+     * @param  string                   $method
+     * @param  string|array|null        $params
+     * @param  string|null              $payload
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
     public function write(string $method, $params = null, ?string $payload = null)
     {
@@ -186,7 +186,7 @@ class Connection implements EventDispatcherAwareInterface
             if ($payload !== null) {
                 $message .= Protocol::SPC;
 
-                $message .= strlen($payload) . Protocol::CR_LF . $payload;
+                $message .= mb_strlen($payload) . Protocol::CR_LF . $payload;
             }
         }
 
@@ -212,11 +212,11 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param string $subject
-     * @param string|ProtoMessage|null $payload
-     * @param string|null $inbox
-     * @return PromiseInterface|Promise
+     * @param  string                   $subject
+     * @param  string|ProtoMessage|null $payload
+     * @param  string|null              $inbox
      * @throws StreamException
+     * @return PromiseInterface|Promise
      */
     public function publish(string $subject, $payload = null, ?string $inbox = null)
     {
@@ -238,10 +238,19 @@ class Connection implements EventDispatcherAwareInterface
         $this->stream->close();
     }
 
+    public function getLoop(): LoopInterface
+    {
+        if ($this->loop !== null) {
+            return $this->loop;
+        }
+
+        return $this->loop = LoopFactory::create();
+    }
+
     /**
-     * @param int|null $timeout
-     * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
+     * @param  int|null                                                            $timeout
      * @throws ConnectionException
+     * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
      */
     private function connect(?int $timeout = null)
     {
@@ -271,15 +280,6 @@ class Connection implements EventDispatcherAwareInterface
         }
 
         return $timeoutPromise ?? $connectionPromise;
-    }
-
-    public function getLoop(): LoopInterface
-    {
-        if ($this->loop !== null) {
-            return $this->loop;
-        }
-
-        return $this->loop = LoopFactory::create();
     }
 
     private function forwardEvents(): void

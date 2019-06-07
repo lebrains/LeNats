@@ -24,7 +24,7 @@ class StringBuffer implements BufferInterface
     {
         $start = $start ?? 0;
 
-        return $length ? substr($this->buffer, $start, $length) : $this->buffer;
+        return $length ? mb_substr($this->buffer, $start, $length) : $this->buffer;
     }
 
     public function isEmpty(): bool
@@ -65,7 +65,7 @@ class StringBuffer implements BufferInterface
 
     public function acknowledge(string $line): void
     {
-        $this->buffer = ltrim(substr($this->buffer, strlen($line)), $this->eol);
+        $this->buffer = ltrim(mb_substr($this->buffer, mb_strlen($line)), $this->eol);
     }
 
     public function clear(): void
