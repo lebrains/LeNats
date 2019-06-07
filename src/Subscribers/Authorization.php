@@ -74,7 +74,7 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
                 }
             );
 
-        $this->connection->run();
+//        $this->connection->run();
     }
 
     public function handleFirstPong(): void

@@ -59,7 +59,7 @@ class ReactEventSubscriber implements EventSubscriberInterface
 
         $this->verboseLog('CLOSE. ' . $event->message);
 
-        $this->connection->stop();
+        $this->connection->stopAll();
     }
 
     public function onEnd(End $event): void
@@ -75,8 +75,8 @@ class ReactEventSubscriber implements EventSubscriberInterface
      */
     public function onError(Error $event): void
     {
-        $this->connection->stop(true);
         $this->connection->close();
+        $this->connection->stopAll();
 
         $this->verboseLog('ERROR. ' . $event->error);
 
@@ -97,8 +97,6 @@ class ReactEventSubscriber implements EventSubscriberInterface
             $this->connection->close();
             $this->verboseLog('Shutdown. Unsubscribed and closed connection');
         }
-
-        $this->connection->stop();
     }
 
     private function verboseLog(string $message): void

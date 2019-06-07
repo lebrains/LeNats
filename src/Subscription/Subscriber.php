@@ -7,6 +7,7 @@ use Google\Protobuf\Internal\Message;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
 use LeNats\Exceptions\StreamException;
+use LeNats\Exceptions\SubscriptionException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Listeners\Responses\SubscriptionResponseListener;
 use LeNats\Listeners\SubscriptionListener;
@@ -14,7 +15,9 @@ use LeNats\Services\Configuration;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\Inbox;
 use NatsStreamingProtocol\Ack;
+use NatsStreamingProtocol\StartPosition;
 use NatsStreamingProtocol\SubscriptionRequest;
+use NatsStreamingProtocol\UnsubscribeRequest;
 use function React\Promise\all;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
@@ -51,12 +54,17 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         $promises = [];
 
         $this->registerListener($subscription->getSid(), static::MESSAGE_LISTENER, 100);
+
         $promises[] = $this->send($subscription->getInbox(), $subscription->getSid())
             ->then(function () use ($subscription): void {
                 if ($subscription->getMessageLimit()) {
                     $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
                 }
+
+                $this->getConnection()->stopTimer($subscription->getSid());
             });
+
+        $this->getConnection()->runTimer($subscription->getSid(), $this->config->getWriteTimeout());
 
         $requestInbox = Inbox::newInbox();
 
@@ -84,7 +92,11 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
 
         all($promises);
 
-        $this->run($subscription->getTimeout());
+        if ($subscription->getTimeout()) {
+            $this->getConnection()->runTimer($sid, $subscription->getTimeout());
+        } else {
+            $this->getConnection()->run();
+        }
 
         return $this;
     }
@@ -155,9 +167,8 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
 
         foreach ($subscriptions as $sid => $subscription) {
             $this->unsubscribe($sid);
+            $this->close($sid);
         }
-
-        $this->getConnection()->run(5);
     }
 
     protected function storeSubscription(Subscription $subscription, ?string $sid = null): void
@@ -186,22 +197,83 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         return $this->config->getSubRequests();
     }
 
+    /**
+     * @param Subscription $subscription
+     * @return Message
+     * @throws SubscriptionException
+     */
     protected function getRequest(Subscription $subscription): Message
     {
         $request = new SubscriptionRequest();
 
         $request->setSubject($subscription->getSubject());
-        if (!empty($subscription->getGroup())) {
-            $request->setQGroup($subscription->getGroup());
-        }
 
+        $request->setQGroup($subscription->getGroup() ?? $this->config->getClientId());
         $request->setClientID($this->config->getClientId());
         $request->setAckWaitInSecs($subscription->getAcknowledgeWait());
-        $request->setMaxInFlight(1024);
+        $request->setMaxInFlight($subscription->getMaxInFlight());
         $request->setDurableName($this->config->getClientId());
         $request->setInbox($subscription->getInbox());
-        $request->setStartPosition($subscription->getStartAt());
+        $request->setStartPosition($subscription->getStartPosition());
+
+        if ($subscription->getStartPosition() === StartPosition::SequenceStart) {
+            if ($subscription->getStartSequence() === null) {
+                throw new SubscriptionException('Start sequence number must be defined with start position by sequence');
+            }
+
+            $request->setStartSequence($subscription->getStartSequence());
+        } elseif ($subscription->getStartPosition() === StartPosition::TimeDeltaStart){
+            if ($subscription->getTimeDeltaStart() === null) {
+                throw new SubscriptionException('Time delta start must be defined with start position by time');
+            }
+
+            $request->setStartTimeDelta($subscription->getTimeDeltaStart());
+        }
 
         return $request;
+    }
+
+    public function close(string $sid)
+    {
+        if (!array_key_exists($sid, self::$subscriptions)) {
+            return;
+        }
+
+        $subscription = self::$subscriptions[$sid];
+
+        $requestInbox = Inbox::newInbox();
+
+        $unsubSid = $this->generator->generateString(16);
+        $this->storeSubscription($subscription, $unsubSid);
+
+        $promises[] = $this->send($requestInbox, $unsubSid)->then(function () use ($unsubSid): void {
+            $this->getConnection()->getLoop()->futureTick(function () use ($unsubSid) {
+                $this->unsubscribe($unsubSid, 1);
+            });
+        });
+
+        $this->registerListener($unsubSid, function () use ($unsubSid): void {
+            $this->getConnection()->stopTimer($unsubSid);
+            $this->remove($unsubSid);
+        });
+
+        $request = new UnsubscribeRequest();
+
+        $request->setClientID($this->config->getClientId());
+        $request->setSubject($subscription->getSubject());
+        $request->setInbox($subscription->getInbox());
+        $request->setDurableName($this->config->getClientId());
+
+        $this->getConnection()->publish(
+            $this->config->getUnsubRequests(),
+            $request,
+            $requestInbox
+        )->then(
+            function () use ($sid) {
+                $this->remove($sid);
+            }
+        );
+
+        $this->getConnection()->runTimer($unsubSid, $this->config->getWriteTimeout());
     }
 }

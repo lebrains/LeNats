@@ -12,6 +12,7 @@ use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\Protocol;
+use LeNats\Support\Timer;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;
@@ -21,9 +22,9 @@ use React\Promise\FulfilledPromise;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use React\Promise\RejectedPromise;
-use function React\Promise\Timer\timeout;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
+use function React\Promise\Timer\timeout;
 
 class Connection implements EventDispatcherAwareInterface
 {
@@ -54,6 +55,9 @@ class Connection implements EventDispatcherAwareInterface
     /** @var bool */
     private $shutdown = false;
 
+    /** @var bool */
+    private $running = false;
+
     public function __construct(Configuration $config, ?LoggerInterface $logger = null)
     {
         $this->config = $config;
@@ -78,29 +82,36 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  int|null            $timeout
+     * @param int|null $timeout
      * @throws ConnectionException
      */
     public function open(?int $timeout = null): void
     {
         $this->connect($timeout);
 
-        $this->run();
+        $this->runTimer(Timer::CONNECTION, $timeout);
 
         if ($this->stream === null) {
             throw new ConnectionException('Not connected');
         }
     }
 
-    public function run(int $timeout = 0): void
+    public function runTimer(string $timerName, int $timeout): void
     {
-        if ($timeout > 0) {
-            $this->timers[] = $this->getLoop()->addTimer($timeout, function (): void {
-                $this->getLoop()->stop();
-            });
-        }
+        $this->timers[$timerName] = $this->getLoop()->addTimer($timeout, function () use ($timerName) {
+            $this->stopTimer($timerName);
+        });
 
-        $this->getLoop()->run();
+        $this->run();
+    }
+
+    public function run(): void
+    {
+        if (!$this->running) {
+            $this->running = true;
+
+            $this->getLoop()->run();
+        }
     }
 
     public function isConnected(): bool
@@ -108,19 +119,32 @@ class Connection implements EventDispatcherAwareInterface
         return $this->stream !== null && $this->stream->isReadable() && $this->stream->isWritable();
     }
 
-    public function stop(bool $all = false): void
+    public function stopTimer(string $timerName): void
     {
-        if (!empty($this->timers)) {
-            $this->getLoop()->cancelTimer(array_pop($this->timers));
+        if (array_key_exists($timerName, $this->timers)) {
+            $this->getLoop()->cancelTimer($this->timers[$timerName]);
 
-            if ($all) {
-                while ($timer = array_pop($this->timers)) {
-                    $this->getLoop()->cancelTimer(array_pop($this->timers));
-                }
-            }
+            unset($this->timers[$timerName]);
         }
 
+        if (empty($this->timers) && $this->running) {
+            $this->stop();
+        }
+    }
+
+    public function stop(): void
+    {
         $this->getLoop()->stop();
+        $this->running = false;
+    }
+
+    public function stopAll(): void
+    {
+        while (!empty($this->timers)) {
+            $this->getLoop()->cancelTimer(array_pop($this->timers));
+        }
+
+        $this->stop();
     }
 
     public function getConfig(): Configuration
@@ -129,8 +153,8 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @throws StreamException
      * @return PromiseInterface|Promise
+     * @throws StreamException
      */
     public function ping()
     {
@@ -138,11 +162,11 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  string                   $method
-     * @param  string|array|null        $params
-     * @param  string|null              $payload
-     * @throws StreamException
+     * @param string $method
+     * @param string|array|null $params
+     * @param string|null $payload
      * @return PromiseInterface|Promise
+     * @throws StreamException
      */
     public function write(string $method, $params = null, ?string $payload = null)
     {
@@ -188,11 +212,11 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  string                   $subject
-     * @param  string|ProtoMessage|null $payload
-     * @param  string|null              $inbox
-     * @throws StreamException
+     * @param string $subject
+     * @param string|ProtoMessage|null $payload
+     * @param string|null $inbox
      * @return PromiseInterface|Promise
+     * @throws StreamException
      */
     public function publish(string $subject, $payload = null, ?string $inbox = null)
     {
@@ -215,9 +239,9 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  int|null                                                            $timeout
-     * @throws ConnectionException
+     * @param int|null $timeout
      * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
+     * @throws ConnectionException
      */
     private function connect(?int $timeout = null)
     {
@@ -249,7 +273,7 @@ class Connection implements EventDispatcherAwareInterface
         return $timeoutPromise ?? $connectionPromise;
     }
 
-    private function getLoop(): LoopInterface
+    public function getLoop(): LoopInterface
     {
         if ($this->loop !== null) {
             return $this->loop;

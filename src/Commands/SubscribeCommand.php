@@ -4,6 +4,7 @@ namespace LeNats\Commands;
 
 use LeNats\Subscription\Subscriber;
 use LeNats\Subscription\Subscription;
+use Rakit\Validation\Validator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,9 +21,16 @@ class SubscribeCommand extends Command
      */
     private $subscriber;
 
+    /**
+     * @var Validator
+     */
+    private $validator;
+
     public function __construct(Subscriber $subscriber)
     {
         parent::__construct();
+
+        $this->validator = new Validator();
 
         $this->subscriber = $subscriber;
     }
@@ -32,7 +40,14 @@ class SubscribeCommand extends Command
         parent::configure();
 
         $this->addArgument('queue', InputArgument::REQUIRED, 'Nats queue name')
-            ->addOption('timeout', 't', InputOption::VALUE_OPTIONAL, 'Subscription working time', 60)
+            ->addOption('timeout', 't', InputOption::VALUE_OPTIONAL, 'Subscription time out (default: 60)', 60)
+            ->addOption('start-position', 'p', InputOption::VALUE_OPTIONAL,
+                'Start position (0 - new only, 1 - last received, 2 - time delta start, 3 - from specific sequence position, 4 - from first)', 0)
+            ->addOption('start-sequence', 'i', InputOption::VALUE_OPTIONAL, 'Start sequence number (required if start-position = 3)')
+            ->addOption('start-time', 's', InputOption::VALUE_OPTIONAL, 'Time delta start (required if start-position = 2)')
+            ->addOption('max-in-flight', 'f', InputOption::VALUE_OPTIONAL, 'Maximum inflight messages without an ack allowed', 1024)
+            ->addOption('group', 'g', InputOption::VALUE_OPTIONAL, 'Group name (if needs to processing one queue in several process with on clientID)')
+            ->addOption('ack-wait', 'a', InputOption::VALUE_OPTIONAL, 'Timeout for receiving an ack from the client', 30)
             ->setDescription('Subscribes to queue and dispatches events to your application')
             ->setHelp('bin/console nats:subscribe your.queue.name [-t timeout]');
     }
@@ -40,22 +55,18 @@ class SubscribeCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $queue = $input->getArgument('queue');
-        $timeout = $input->getOption('timeout');
 
-        if ($queue === null || is_array($queue)) {
-            $output->write('Argument `queue` must be type of string');
-
-            return 1;
-        }
-
-        if ($timeout === null || is_array($timeout)) {
-            $output->write('Argument `timeout` must be type of int');
+        if ($queue === null || !is_string($queue)) {
+            $output->write('Queue name must be defined');
 
             return 1;
         }
 
-        $subscription = new Subscription((string)$queue);
-        $subscription->setTimeout((int)$timeout);
+        $subscription = new Subscription($queue);
+
+        if (!$this->configureSubscription($subscription, $input, $output)) {
+            return 1;
+        }
 
         try {
             $this->subscriber->subscribe($subscription);
@@ -69,5 +80,54 @@ class SubscribeCommand extends Command
         }
 
         return null;
+    }
+
+    private function configureSubscription(Subscription $subscription, InputInterface $input, OutputInterface $output): bool
+    {
+        $validation = $this->validator->validate($input->getOptions(), [
+            'timeout'        => 'integer|min:0',
+            'start-position' => 'integer|in:0,1,2,3,4',
+            'start-sequence' => 'required_if:start-position,3|integer|min:0',
+            'start-time'     => 'required_if:start-position,2|integer|min:0',
+            'max-in-flight'  => 'integer|min:0',
+            'group'          => 'alpha_dash|max:128',
+            'ack-wait'       => 'integer|min:0',
+        ]);
+
+        if ($validation->fails()) {
+            foreach ($validation->errors()->all() as $message) {
+                $output->writeln(sprintf('Error: %s', $message));
+            }
+
+            return false;
+        }
+
+        $subscription->setTimeout($input->getOption('timeout'));
+
+        if ($input->hasOption('start-position')) {
+            $subscription->setStartPosition((int)$input->getOption('start-position'));
+        }
+
+        if ($input->hasOption('start-sequence')) {
+            $subscription->setStartSequence((int)$input->getOption('start-sequence'));
+        }
+
+        if ($input->hasOption('start-time')) {
+            $subscription->setTimeDeltaStart((int)$input->getOption('start-time'));
+        }
+
+        if ($input->hasOption('max-in-flight')) {
+            $subscription->setMaxInFlight((int)$input->getOption('max-in-flight'));
+        }
+
+        if ($input->hasOption('group')) {
+            $subscription->setGroup($input->getOption('group'));
+        }
+
+        if ($input->hasOption('ack-wait')) {
+            $subscription->setAcknowledgeWait((int)$input->getOption('ack-wait'));
+        }
+
+        return true;
     }
 }

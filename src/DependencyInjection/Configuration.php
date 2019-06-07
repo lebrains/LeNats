@@ -40,6 +40,8 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('client_id')->isRequired()->end()
             ->scalarNode('cluster_id')->isRequired()->end()
             ->booleanNode('verbose')->defaultFalse()->end()
+            ->integerNode('connection_timeout')->defaultValue(30)->end()
+            ->integerNode('write_timeout')->defaultValue(5)->end()
             ->arrayNode('context')
             ->children()
             ->arrayNode('tls')

@@ -32,7 +32,7 @@ class Subscription
     private $acknowledgeWait = 30;
 
     /** @var int */
-    private $startAt = StartPosition::NewOnly;
+    private $startPosition = StartPosition::NewOnly;
 
     /** @var int */
     private $startMicroTime = 0;
@@ -45,6 +45,15 @@ class Subscription
 
     /** @var string */
     private $acknowledgeInbox;
+
+    /** @var int|null */
+    private $startSequence;
+
+    /** @var int|null */
+    private $timeDeltaStart;
+
+    /** @var int */
+    private $maxInFlight = 1024;
 
     public function __construct(string $subject, ?array $options = null)
     {
@@ -147,17 +156,17 @@ class Subscription
     /**
      * @return int
      */
-    public function getStartAt(): int
+    public function getStartPosition(): int
     {
-        return $this->startAt;
+        return $this->startPosition;
     }
 
     /**
-     * @param int $startAt
+     * @param int $startPosition
      */
-    public function setStartAt(int $startAt): void
+    public function setStartPosition(int $startPosition): void
     {
-        $this->startAt = $startAt;
+        $this->startPosition = $startPosition;
     }
 
     /**
@@ -245,5 +254,53 @@ class Subscription
     public function getProcessed(): int
     {
         return $this->processed;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getStartSequence(): ?int
+    {
+        return $this->startSequence;
+    }
+
+    /**
+     * @param int $startSequence
+     */
+    public function setStartSequence(int $startSequence): void
+    {
+        $this->startSequence = $startSequence;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTimeDeltaStart(): ?int
+    {
+        return $this->timeDeltaStart;
+    }
+
+    /**
+     * @param int $timeDeltaStart
+     */
+    public function setTimeDeltaStart(int $timeDeltaStart): void
+    {
+        $this->timeDeltaStart = $timeDeltaStart;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxInFlight(): int
+    {
+        return $this->maxInFlight;
+    }
+
+    /**
+     * @param int $maxInFlight
+     */
+    public function setMaxInFlight(int $maxInFlight): void
+    {
+        $this->maxInFlight = $maxInFlight;
     }
 }

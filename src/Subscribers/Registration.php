@@ -59,6 +59,7 @@ class Registration implements EventSubscriberInterface
     public function handle(): void
     {
         $subscription = new Subscription(Inbox::getDiscoverSubject($this->config->getClusterId()));
+        $subscription->setTimeout(5);
 
         $this->connector->subscribe($subscription);
     }

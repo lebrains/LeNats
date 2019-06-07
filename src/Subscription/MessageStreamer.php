@@ -59,20 +59,10 @@ abstract class MessageStreamer
         return $this->getConnection()->write(Protocol::UNSUB, $params);
     }
 
-    public function run(int $timeout = 0): void
-    {
-        $this->getConnection()->run($timeout);
-    }
-
-    public function stop(): void
-    {
-        $this->getConnection()->stop();
-    }
-
     protected function getConnection(): Connection
     {
         if (!$this->connection->isConnected()) {
-            $this->connection->open(30); // TODO
+            $this->connection->open($this->config->getConnectionTimeout());
         }
 
         return $this->connection;

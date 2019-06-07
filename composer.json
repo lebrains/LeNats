@@ -21,6 +21,7 @@
     "jms/serializer-bundle": "^2.4|^3.3",
     "mhujer/jms-serializer-uuid": "^1.0|^3.1",
     "psr/event-dispatcher": "^0.6|^1.0",
+    "rakit/validation": "^1.1",
     "react/promise-timer": "^1.5",
     "react/socket": "^1.2",
     "react/stream": "^1.1",

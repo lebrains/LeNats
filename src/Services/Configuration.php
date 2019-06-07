@@ -64,6 +64,11 @@ class Configuration
      */
     private $closeRequests;
 
+    /** @var int */
+    private $connectionTimeout = 30;
+
+    private $writeTimeout = 5;
+
     public function __construct(?array $config = null)
     {
         $config = $config ?? [];
@@ -260,5 +265,53 @@ class Configuration
     public function getPubPrefix(): string
     {
         return $this->pubPrefix;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUnsubRequests(): string
+    {
+        return $this->unsubRequests;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCloseRequests(): string
+    {
+        return $this->closeRequests;
+    }
+
+    /**
+     * @return int
+     */
+    public function getConnectionTimeout(): int
+    {
+        return $this->connectionTimeout;
+    }
+
+    /**
+     * @param int $connectionTimeout
+     */
+    public function setConnectionTimeout(int $connectionTimeout): void
+    {
+        $this->connectionTimeout = $connectionTimeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getWriteTimeout(): int
+    {
+        return $this->writeTimeout;
+    }
+
+    /**
+     * @param int $writeTimeout
+     */
+    public function setWriteTimeout(int $writeTimeout): void
+    {
+        $this->writeTimeout = $writeTimeout;
     }
 }

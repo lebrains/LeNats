@@ -91,10 +91,10 @@ class Publisher extends MessageStreamer
             });
         }
 
-        $promise->then(function (): void {
-            $this->stop();
+        $promise->then(function () use($guid): void {
+            $this->getConnection()->stopTimer($guid);
         });
 
-        $this->run();
+        $this->getConnection()->runTimer($guid, $this->config->getWriteTimeout());
     }
 }

@@ -12,3 +12,5 @@ if (!in_array($kernelVersion, [3, 4], true)) {
 
 $_ENV['KERNEL_DIR'] = dirname(__DIR__) . "/tests/Mocks";
 $_ENV['KERNEL_CLASS'] = Kernel::class;
+
+require __DIR__ . '/Mocks/env.php';

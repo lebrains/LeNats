@@ -5,6 +5,7 @@ namespace LeNats\Listeners\Responses;
 use LeNats\Events\Nats\MessageReceived;
 use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
+use LeNats\Support\Timer;
 use NatsStreamingProtocol\ConnectResponse;
 
 class ConnectionResponseListener
@@ -32,6 +33,6 @@ class ConnectionResponseListener
 
         $this->config->configureConnection($response);
 
-        $this->connection->stop();
+        $this->connection->stopTimer(Timer::CONNECTION);
     }
 }
