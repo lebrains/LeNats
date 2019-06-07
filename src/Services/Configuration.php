@@ -67,6 +67,7 @@ class Configuration
     /** @var int */
     private $connectionTimeout = 30;
 
+    /** @var int */
     private $writeTimeout = 5;
 
     public function __construct(?array $config = null)

@@ -6,7 +6,6 @@ imports:
 
 services:
   PhpCsFixer\Fixer\Alias\NoAliasFunctionsFixer: ~
-  PhpCsFixer\Fixer\Alias\MbStrFunctionsFixer: ~
   PhpCsFixer\Fixer\Alias\RandomApiMigrationFixer: ~
 
   PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer:

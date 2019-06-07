@@ -80,6 +80,8 @@ class SubscribeCommand extends Command
                 'Timeout for receiving an ack from the client',
                 30
             )
+            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, 'Limit received messages')
+            ->addOption('unsubscribe', 'u', InputOption::VALUE_OPTIONAL, 'Prefer unsubscribe nor close command', 0)
             ->setDescription('Subscribes to queue and dispatches events to your application')
             ->setHelp('bin/console nats:subscribe your.queue.name [-t timeout]');
     }
@@ -127,6 +129,8 @@ class SubscribeCommand extends Command
             'max-in-flight'  => 'integer|min:0',
             'group'          => 'alpha_dash|max:128',
             'ack-wait'       => 'integer|min:0',
+            'limit'          => 'integer|min:0',
+            'unsubscribe'    => 'integer|in:0,1',
         ]);
 
         if ($validation->fails()) {
@@ -161,6 +165,14 @@ class SubscribeCommand extends Command
 
         if ($input->hasOption('ack-wait')) {
             $subscription->setAcknowledgeWait((int)$input->getOption('ack-wait'));
+        }
+
+        if ($input->hasOption('limit')) {
+            $subscription->setMessageLimit((int)$input->getOption('limit'));
+        }
+
+        if ($input->hasOption('unsubscribe')) {
+            $subscription->setUnsubscribe((bool)$input->getOption('unsubscribe'));
         }
 
         return true;

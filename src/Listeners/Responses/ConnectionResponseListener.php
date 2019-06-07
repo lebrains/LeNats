@@ -34,5 +34,6 @@ class ConnectionResponseListener
         $this->config->configureConnection($response);
 
         $this->connection->stopTimer(Timer::CONNECTION);
+        $this->connection->stopTimer($message->subscription->getSid());
     }
 }

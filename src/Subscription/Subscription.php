@@ -55,6 +55,9 @@ class Subscription
     /** @var int */
     private $maxInFlight = 1024;
 
+    /** @var bool */
+    private $unsubscribe = false;
+
     public function __construct(string $subject, ?array $options = null)
     {
         $options = $options ?? [];
@@ -214,12 +217,14 @@ class Subscription
         $this->messageLimit = $messageLimit;
     }
 
-    /**
-     * @return string
-     */
     public function getAcknowledgeInbox(): string
     {
         return $this->acknowledgeInbox;
+    }
+
+    public function hasAcknowledgeInbox(): bool
+    {
+        return $this->acknowledgeInbox !== null;
     }
 
     /**
@@ -302,5 +307,21 @@ class Subscription
     public function setMaxInFlight(int $maxInFlight): void
     {
         $this->maxInFlight = $maxInFlight;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUnsubscribe(): bool
+    {
+        return $this->unsubscribe;
+    }
+
+    /**
+     * @param bool $unsubscribe
+     */
+    public function setUnsubscribe(bool $unsubscribe): void
+    {
+        $this->unsubscribe = $unsubscribe;
     }
 }

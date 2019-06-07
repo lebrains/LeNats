@@ -82,7 +82,7 @@ class Connection implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  int            $timeout
+     * @param  int                 $timeout
      * @throws ConnectionException
      */
     public function open(int $timeout): void
@@ -186,7 +186,7 @@ class Connection implements EventDispatcherAwareInterface
             if ($payload !== null) {
                 $message .= Protocol::SPC;
 
-                $message .= mb_strlen($payload) . Protocol::CR_LF . $payload;
+                $message .= strlen($payload) . Protocol::CR_LF . $payload;
             }
         }
 

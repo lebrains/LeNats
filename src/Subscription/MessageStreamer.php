@@ -43,12 +43,11 @@ abstract class MessageStreamer
     }
 
     /**
-     * @param  string                   $sid
-     * @param  int|null                 $quantity
+     * @param  string          $sid
+     * @param  int|null        $quantity
      * @throws StreamException
-     * @return PromiseInterface|Promise
      */
-    public function unsubscribe(string $sid, ?int $quantity = null)
+    public function unsubscribe(string $sid, ?int $quantity = null): void
     {
         $params = [$sid];
 
@@ -56,7 +55,7 @@ abstract class MessageStreamer
             $params[] = $quantity;
         }
 
-        return $this->getConnection()->write(Protocol::UNSUB, $params);
+        $this->getConnection()->write(Protocol::UNSUB, $params);
     }
 
     protected function getConnection(): Connection

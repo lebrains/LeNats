@@ -3,7 +3,7 @@ le_nats:
     dsn: '%env(NATS_DSN)%'
     client_id: '%env(NATS_CLIENT_ID)%'
     cluster_id: '%env(NATS_CLUSTER_ID)%'
-    verbose: true
+    verbose: false
     context:
       tls:
         protocol: tlsv1.2

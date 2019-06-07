@@ -99,7 +99,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
             $commands = Protocol::getServerMethods();
 
             while (!$handled && $command = array_pop($commands)) {
-                if (mb_strpos($line, $command) !== 0) {
+                if (strpos($line, $command) !== 0) {
                     continue;
                 }
 
@@ -170,7 +170,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
         $payload = '';
 
         if ($length > 0) {
-            $payload = $buffer->get($length, mb_strlen($rawMessage) + mb_strlen(Protocol::CR_LF));
+            $payload = $buffer->get($length, strlen($rawMessage) + strlen(Protocol::CR_LF));
             $buffer->resetPosition();
         }
 

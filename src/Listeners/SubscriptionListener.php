@@ -8,6 +8,7 @@ use LeNats\Events\CloudEvent;
 use LeNats\Events\Nats\MessageReceived;
 use LeNats\Exceptions\SubscriptionException;
 use LeNats\Services\EventTypeResolver;
+use LeNats\Subscription\Subscriber;
 use LeNats\Support\Dispatcherable;
 use NatsStreamingProtocol\MsgProto;
 
@@ -25,15 +26,25 @@ class SubscriptionListener implements EventDispatcherAwareInterface
      */
     private $typeResolver;
 
-    public function __construct(SerializerInterface $serializer, EventTypeResolver $typeResolver)
-    {
+    /**
+     * @var Subscriber
+     */
+    private $subscriber;
+
+    public function __construct(
+        SerializerInterface $serializer,
+        EventTypeResolver $typeResolver,
+        Subscriber $subscriber
+    ) {
         $this->serializer = $serializer;
         $this->typeResolver = $typeResolver;
+        $this->subscriber = $subscriber;
     }
 
     /**
-     * @param  MessageReceived       $event
+     * @param  MessageReceived                    $event
      * @throws SubscriptionException
+     * @throws \LeNats\Exceptions\StreamException
      */
     public function handle(MessageReceived $event): void
     {
@@ -64,6 +75,10 @@ class SubscriptionListener implements EventDispatcherAwareInterface
         $cloudEvent->setSequenceId($message->getSequence());
 
         $event->subscription->incrementReceived();
+
+        if ($event->subscription->getMessageLimit() && $event->subscription->getMessageLimit() >= $event->subscription->getReceived()) {
+            $this->subscriber->unsubscribe($event->subscription->getSid());
+        }
 
         $this->dispatch($cloudEvent, $cloudEvent->getType());
     }
