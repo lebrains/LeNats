@@ -10,6 +10,7 @@ use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Listeners\Responses\SubscriptionResponseListener;
 use LeNats\Listeners\SubscriptionListener;
 use NatsStreamingProtocol\Ack;
+use NatsStreamingProtocol\CloseRequest;
 use NatsStreamingProtocol\StartPosition;
 use NatsStreamingProtocol\SubscriptionRequest;
 use NatsStreamingProtocol\UnsubscribeRequest;
@@ -73,12 +74,16 @@ class Subscriber extends SubscriptionMessageStreamer
             return;
         }
 
-        $request = new UnsubscribeRequest();
+        $request = new CloseRequest();
+
+        if ($subscription->isUnsubscribe()) {
+            $request = new UnsubscribeRequest();
+            $request->setSubject($subscription->getSubject());
+            $request->setInbox($subscription->getAcknowledgeInbox());
+            $request->setDurableName($this->config->getClientId());
+        }
 
         $request->setClientID($this->config->getClientId());
-        $request->setSubject($subscription->getSubject());
-        $request->setInbox($subscription->getAcknowledgeInbox());
-        $request->setDurableName($this->config->getClientId());
 
         $this->getConnection()->publish(
             $subscription->isUnsubscribe() ? $this->config->getUnsubRequests() : $this->config->getCloseRequests(),
