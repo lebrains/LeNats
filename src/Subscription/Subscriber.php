@@ -240,6 +240,7 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
         }
 
         $subscription = self::$subscriptions[$sid];
+        $this->remove($sid);
 
         $requestInbox = Inbox::newInbox();
 
@@ -268,10 +269,6 @@ class Subscriber extends MessageStreamer implements EventDispatcherAwareInterfac
             $this->config->getUnsubRequests(),
             $request,
             $requestInbox
-        )->then(
-            function () use ($sid) {
-                $this->remove($sid);
-            }
         );
 
         $this->getConnection()->runTimer($unsubSid, $this->config->getWriteTimeout());
