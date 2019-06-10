@@ -35,7 +35,9 @@ abstract class SubscriptionMessageStreamer extends MessageStreamer implements Ev
 
         $promises = [];
 
-        $this->registerListener($subscription->getSid(), $this->getMessageListenerClass(), 100);
+        if ($this->getMessageListenerClass() !== null) {
+            $this->registerListener($subscription->getSid(), $this->getMessageListenerClass(), 100);
+        }
 
         $promises[] = $this->send($subscription->getInbox(), $subscription->getSid())
             ->then(function () use ($subscription): void {
@@ -123,7 +125,7 @@ abstract class SubscriptionMessageStreamer extends MessageStreamer implements Ev
 
     abstract protected function getRequest(Subscription $subscription): Message;
 
-    abstract protected function getMessageListenerClass(): string;
+    abstract protected function getMessageListenerClass(): ?string;
 
     abstract protected function getResponseListenerClass(): string;
 

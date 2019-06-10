@@ -111,7 +111,10 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 
                 if ($command === Protocol::MSG) {
                     try {
-                        $message = $this->getFullMessage($line);
+                        if (!$message = $this->getFullMessage($line)) {
+                            // Wait for next tick - buffer has not full message
+                            return;
+                        }
 
                         $line .= Protocol::CR_LF . $message[1];
                         $buffer->acknowledge($line);
@@ -155,7 +158,7 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
      * @throws StreamException
      * @return array
      */
-    private function getFullMessage(string $rawMessage): array
+    private function getFullMessage(string $rawMessage): ?array
     {
         $buffer = $this->buffer;
         $message = explode(Protocol::SPC, $rawMessage, 5);
@@ -172,6 +175,10 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
         if ($length > 0) {
             $payload = $buffer->get($length, strlen($rawMessage) + strlen(Protocol::CR_LF));
             $buffer->resetPosition();
+
+            if (strlen($payload) !== $length) {
+                return null;
+            }
         }
 
         return [$sid, $payload, $subject, $replay];

@@ -2,18 +2,24 @@
 
 namespace LeNats\Subscribers;
 
+use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\Nats\Pong;
 use LeNats\Events\React\Close;
 use LeNats\Events\React\End;
 use LeNats\Events\React\Error;
 use LeNats\Exceptions\NatsException;
 use LeNats\Services\Connection;
+use LeNats\Subscription\CloseConnection;
 use LeNats\Subscription\Subscriber;
+use LeNats\Subscription\Subscription;
+use LeNats\Support\Dispatcherable;
+use LeNats\Support\Inbox;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class ReactEventSubscriber implements EventSubscriberInterface
+class ReactEventSubscriber implements EventSubscriberInterface, EventDispatcherAwareInterface
 {
+    use Dispatcherable;
     /**
      * @var Connection
      */
@@ -29,10 +35,20 @@ class ReactEventSubscriber implements EventSubscriberInterface
      */
     private $subscriber;
 
-    public function __construct(Connection $connection, Subscriber $subscriber, ?LoggerInterface $logger = null)
-    {
+    /**
+     * @var CloseConnection
+     */
+    private $closeConnection;
+
+    public function __construct(
+        Connection $connection,
+        Subscriber $subscriber,
+        CloseConnection $closeConnection,
+        ?LoggerInterface $logger = null
+) {
         $this->connection = $connection;
         $this->logger = $logger;
+        $this->closeConnection = $closeConnection;
         $this->subscriber = $subscriber;
     }
 
@@ -52,8 +68,6 @@ class ReactEventSubscriber implements EventSubscriberInterface
     public function onClose(Close $event): void
     {
         if ($this->connection->isConnected()) {
-            $this->connection->close();
-
             $this->verboseLog('CLOSE: connection closed');
         }
 
@@ -76,6 +90,7 @@ class ReactEventSubscriber implements EventSubscriberInterface
     public function onError(Error $event): void
     {
         $this->connection->close();
+
         $this->connection->stopAll();
 
         $this->verboseLog('ERROR. ' . $event->error);
@@ -94,7 +109,9 @@ class ReactEventSubscriber implements EventSubscriberInterface
             $this->connection->setShutdown(true);
             $this->subscriber->unsubscribeAll();
 
-            $this->connection->close();
+            $subscription = new Subscription(Inbox::newInbox());
+            $this->closeConnection->subscribe($subscription);
+
             $this->verboseLog('Shutdown. Unsubscribed and closed connection');
         }
     }

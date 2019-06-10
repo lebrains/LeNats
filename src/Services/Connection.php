@@ -13,6 +13,7 @@ use LeNats\Exceptions\StreamException;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\Protocol;
 use LeNats\Support\Timer;
+use NatsStreamingProtocol\SubscriptionRequest;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;

@@ -20,6 +20,9 @@ services:
   LeNats\Subscription\Subscriber:
     autowire: true
 
+  LeNats\Subscription\CloseConnection:
+    autowire: true
+
   LeNats\Subscription\Publisher:
     autowire: true
     arguments:
