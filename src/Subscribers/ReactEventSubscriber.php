@@ -111,6 +111,7 @@ class ReactEventSubscriber implements EventSubscriberInterface, EventDispatcherA
 
             $subscription = new Subscription(Inbox::newInbox());
             $this->closeConnection->subscribe($subscription);
+            $this->connection->close();
 
             $this->verboseLog('Shutdown. Unsubscribed and closed connection');
         }

@@ -33,6 +33,5 @@ class CloseConnectionResponseListener
 
         $this->connection->stopTimer(Timer::DISCONNECTION);
         $this->connection->stopTimer($message->subscription->getSid());
-        $this->connection->close();
     }
 }
