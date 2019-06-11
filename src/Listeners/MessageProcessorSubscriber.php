@@ -152,6 +152,10 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
                 throw new StreamException('Message not handled: ' . $line);
             }
         }
+
+        if ($processed >= static::MAX_MESSAGES_IN_ONE_TICK && !$this->buffer->isEmpty()) {
+            $this->subscriber->getConnection()->processBufferOnNextTick();
+        }
     }
 
     /**

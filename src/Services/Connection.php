@@ -4,6 +4,7 @@ namespace LeNats\Services;
 
 use function Clue\React\Block\await;
 use LeNats\Contracts\EventDispatcherAwareInterface;
+use LeNats\Events\Nats\BufferUpdated;
 use LeNats\Events\Nats\NatsConfigured;
 use LeNats\Events\React\Close;
 use LeNats\Events\React\Data;
@@ -207,5 +208,12 @@ class Connection implements EventDispatcherAwareInterface
                 });
             }
         }
+    }
+
+    public function processBufferOnNextTick(): void
+    {
+        $this->getLoop()->futureTick(function () {
+            $this->dispatch(new BufferUpdated());
+        });
     }
 }

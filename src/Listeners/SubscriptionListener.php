@@ -74,13 +74,16 @@ class SubscriptionListener implements EventDispatcherAwareInterface
             throw new SubscriptionException($eventClass . ' must be instance of CloudEvent');
         }
 
-        $cloudEvent->setSubscription($event->subscription);
+        $subscription = $event->subscription;
+        $cloudEvent->setSubscription($subscription);
         $cloudEvent->setSequenceId($message->getSequence());
 
-        $event->subscription->incrementReceived();
+        $subscription->incrementReceived();
 
-        if ($event->subscription->getMessageLimit() && $event->subscription->getMessageLimit() >= $event->subscription->getReceived()) {
-            $this->subscriber->unsubscribe($event->subscription->getSid());
+        if ($subscription->getMessageLimit() && $subscription->getReceived() >= $subscription->getMessageLimit()) {
+            $connection = $this->subscriber->getConnection();
+
+            $subscription->getTimeout() ? $connection->stopTimer($subscription->getSid()) : $connection->stop();
         }
 
         $this->dispatch($cloudEvent, $cloudEvent->getType());
