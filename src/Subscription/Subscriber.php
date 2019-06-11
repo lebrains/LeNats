@@ -90,7 +90,7 @@ class Subscriber extends SubscriptionMessageStreamer
         $request->setClientID($config->getClientId());
 
         $this->getStream()->publish(
-            $subscription->isUnsubscribe() ? $config->getUnsubRequests() : $config->getCloseRequests(),
+            $subscription->isUnsubscribe() ? $config->getUnsubRequests() : $config->getSubCloseRequests(),
             $request
         );
 

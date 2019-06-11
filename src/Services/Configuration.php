@@ -315,4 +315,12 @@ class Configuration
     {
         $this->writeTimeout = $writeTimeout;
     }
+
+    /**
+     * @return string
+     */
+    public function getSubCloseRequests(): string
+    {
+        return $this->subCloseRequests;
+    }
 }

@@ -172,7 +172,7 @@ class SubscribeCommand extends Command
         }
 
         if ($input->hasOption('unsubscribe')) {
-            $subscription->setUnsubscribe((bool)$input->getOption('unsubscribe'));
+            $subscription->setUnsubscribe(filter_var($input->getOption('unsubscribe'), FILTER_VALIDATE_BOOLEAN));
         }
 
         return true;
