@@ -58,6 +58,9 @@ class Subscription
     /** @var bool */
     private $unsubscribe = false;
 
+    /** @var string */
+    private $durableName = '';
+
     public function __construct(string $subject, ?array $options = null)
     {
         $options = $options ?? [];
@@ -323,5 +326,21 @@ class Subscription
     public function setUnsubscribe(bool $unsubscribe): void
     {
         $this->unsubscribe = $unsubscribe;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDurableName(): string
+    {
+        return $this->durableName;
+    }
+
+    /**
+     * @param string $durableName
+     */
+    public function setDurableName(string $durableName): void
+    {
+        $this->durableName = $durableName;
     }
 }

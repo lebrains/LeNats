@@ -80,6 +80,14 @@ class SubscribeCommand extends Command
                 'Timeout for receiving an ack from the client',
                 30
             )
+            ->addOption(
+                'is-durable',
+                'r',
+                InputOption::VALUE_OPTIONAL,
+                'If set to 1 (and not set durable-name) will pass clientID as durable-name',
+                0
+            )
+            ->addOption('durable-name', 'd', InputOption::VALUE_OPTIONAL, 'Set durable subscription', '')
             ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, 'Limit received messages')
             ->addOption('unsubscribe', 'u', InputOption::VALUE_OPTIONAL, 'Prefer unsubscribe nor close command', 0)
             ->setDescription('Subscribes to queue and dispatches events to your application')
@@ -131,6 +139,8 @@ class SubscribeCommand extends Command
             'ack-wait'       => 'integer|min:0',
             'limit'          => 'integer|min:0',
             'unsubscribe'    => 'integer|in:0,1',
+            'durable-name'   => 'alpha_dash|max:128',
+            'is-durable'     => 'integer|in:0,1',
         ]);
 
         if ($validation->fails()) {
@@ -141,38 +151,50 @@ class SubscribeCommand extends Command
             return false;
         }
 
-        $subscription->setTimeout($input->getOption('timeout'));
+        if (is_array($input->getOption('timeout'))) {
+            return false;
+        }
 
-        if ($input->hasOption('start-position')) {
+        $subscription->setTimeout((int)$input->getOption('timeout'));
+
+        if ($input->hasOption('start-position') && !is_array($input->getOption('start-position'))) {
             $subscription->setStartPosition((int)$input->getOption('start-position'));
         }
 
-        if ($input->hasOption('start-sequence')) {
+        if ($input->hasOption('start-sequence') && !is_array($input->getOption('start-sequence'))) {
             $subscription->setStartSequence((int)$input->getOption('start-sequence'));
         }
 
-        if ($input->hasOption('start-time')) {
+        if ($input->hasOption('start-time') && !is_array($input->getOption('start-time'))) {
             $subscription->setTimeDeltaStart((int)$input->getOption('start-time'));
         }
 
-        if ($input->hasOption('max-in-flight')) {
+        if ($input->hasOption('max-in-flight') && !is_array($input->getOption('max-in-flight'))) {
             $subscription->setMaxInFlight((int)$input->getOption('max-in-flight'));
         }
 
-        if ($input->hasOption('group')) {
-            $subscription->setGroup($input->getOption('group'));
+        if ($input->hasOption('group') && !is_array($input->getOption('group'))) {
+            $subscription->setGroup((string)$input->getOption('group'));
         }
 
-        if ($input->hasOption('ack-wait')) {
+        if ($input->hasOption('ack-wait') && !is_array($input->getOption('ack-wait'))) {
             $subscription->setAcknowledgeWait((int)$input->getOption('ack-wait'));
         }
 
-        if ($input->hasOption('limit')) {
+        if ($input->hasOption('limit') && !is_array($input->getOption('limit'))) {
             $subscription->setMessageLimit((int)$input->getOption('limit'));
         }
 
         if ($input->hasOption('unsubscribe')) {
             $subscription->setUnsubscribe(filter_var($input->getOption('unsubscribe'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($input->hasOption('is-durable') && filter_var($input->getOption('is-durable'), FILTER_VALIDATE_BOOLEAN)) {
+            $subscription->setDurableName($this->subscriber->getConnection()->getConfig()->getClientId());
+        }
+
+        if ($input->hasOption('durable-name') && !is_array($input->getOption('durable-name'))) {
+            $subscription->setDurableName((string)$input->getOption('durable-name'));
         }
 
         return true;

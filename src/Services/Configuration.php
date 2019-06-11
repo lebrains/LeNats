@@ -70,6 +70,9 @@ class Configuration
     /** @var int */
     private $writeTimeout = 5;
 
+    /** @var bool */
+    private $debug = false;
+
     public function __construct(?array $config = null)
     {
         $config = $config ?? [];
@@ -322,5 +325,21 @@ class Configuration
     public function getSubCloseRequests(): string
     {
         return $this->subCloseRequests;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDebug(): bool
+    {
+        return $this->debug;
+    }
+
+    /**
+     * @param bool $debug
+     */
+    public function setDebug(bool $debug): void
+    {
+        $this->debug = $debug;
     }
 }

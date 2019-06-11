@@ -83,10 +83,7 @@ class Subscriber extends SubscriptionMessageStreamer
         $request = new UnsubscribeRequest();
         $request->setSubject($subscription->getSubject());
         $request->setInbox($subscription->getAcknowledgeInbox());
-        if ($subscription->getStartPosition() === StartPosition::NewOnly) {
-            $request->setDurableName($config->getClientId());
-        }
-
+        $request->setDurableName($subscription->getDurableName());
         $request->setClientID($config->getClientId());
 
         $this->getStream()->publish(
@@ -117,7 +114,7 @@ class Subscriber extends SubscriptionMessageStreamer
         $request->setClientID($this->connection->getConfig()->getClientId());
         $request->setAckWaitInSecs($subscription->getAcknowledgeWait());
         $request->setMaxInFlight($subscription->getMaxInFlight());
-        $request->setDurableName($this->connection->getConfig()->getClientId());
+        $request->setDurableName($subscription->getDurableName());
         $request->setInbox($subscription->getInbox());
         $request->setStartPosition($subscription->getStartPosition());
 

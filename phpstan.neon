@@ -11,6 +11,7 @@ parameters:
         - vendor
         - tests
         - phpstan-autoload.php
+        - src/Support/Dispatcherable.php
     fileExtensions:
         - php
     symfony:

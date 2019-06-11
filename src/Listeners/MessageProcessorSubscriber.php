@@ -139,8 +139,8 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
 
                 $handled = true;
 
-                if ($this->logger && getenv('APP_ENV') === 'dev') {
-                    $this->logger->info('>>>> ' . $line);
+                if ($this->logger && $this->subscriber->getConnection()->getConfig()->isDebug()) {
+                    $this->logger->info(sprintf('>>>> %s ...', substr($line, 0, 80)));
                 }
             }
 

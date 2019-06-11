@@ -52,6 +52,14 @@ abstract class MessageStreamer
     }
 
     /**
+     * @return Connection
+     */
+    public function getConnection(): Connection
+    {
+        return $this->connection;
+    }
+
+    /**
      * @throws ConnectionException
      * @return Stream
      */

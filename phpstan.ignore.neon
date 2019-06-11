@@ -1,8 +1,5 @@
 parameters:
     ignoreErrors:
-#        - '#Method Symfony\\Contracts\\EventDispatcher\\EventDispatcherInterface::dispatch\(\) invoked with 2 parameters, 1 required.#'
-        - '#Parameter .{1}1 \$eventName of method Symfony\\Component\\EventDispatcher\\EventDispatcherInterface::dispatch\(\) expects string, Symfony\\Component\\EventDispatcher\\Event given.#'
-        - '#Parameter .{1}2 \$event of method Symfony\\Component\\EventDispatcher\\EventDispatcherInterface::dispatch\(\) expects Symfony\\Component\\EventDispatcher\\Event|null, string given.#'
         - '#Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::children\(\).#'
         - '#Parameter(.*)\$listener of method Symfony\\Component\\EventDispatcher\\EventDispatcherInterface::addListener\(\) expects callable\(\): mixed,(.*)given.#'
         - '#Strict comparison using === between React\\Promise\\PromiseInterface and null will always evaluate to false.#'
