@@ -5,7 +5,7 @@ namespace LeNats\Listeners;
 use JMS\Serializer\SerializerInterface;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\CloudEvent;
-use LeNats\Events\Nats\MessageReceived;
+use LeNats\Events\Nats\SubscriptionMessageReceived;
 use LeNats\Exceptions\SubscriptionException;
 use LeNats\Services\EventTypeResolver;
 use LeNats\Subscription\Subscriber;
@@ -42,11 +42,11 @@ class SubscriptionListener implements EventDispatcherAwareInterface
     }
 
     /**
-     * @param  MessageReceived                    $event
+     * @param  SubscriptionMessageReceived        $event
      * @throws SubscriptionException
      * @throws \LeNats\Exceptions\StreamException
      */
-    public function handle(MessageReceived $event): void
+    public function handle(SubscriptionMessageReceived $event): void
     {
         $message = new MsgProto();
         try {

@@ -20,7 +20,7 @@ abstract class Protocol
 
     public static function getServerMethods(): array
     {
-        return [self::INFO, self::MSG, self::PING, self::PONG, self::ERR, self::OK];
+        return [self::MSG, self::INFO, self::PING, self::PONG, self::ERR, self::OK];
     }
 
     public static function getClientMethods(): array

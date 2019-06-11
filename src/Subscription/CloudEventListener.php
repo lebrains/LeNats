@@ -3,9 +3,10 @@
 namespace LeNats\Subscription;
 
 use LeNats\Events\CloudEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use LeNats\Exceptions\ConnectionException;
+use LeNats\Exceptions\StreamException;
 
-abstract class CloudEventSubscriber implements EventSubscriberInterface
+abstract class CloudEventListener
 {
     /**
      * @var Subscriber
@@ -17,6 +18,11 @@ abstract class CloudEventSubscriber implements EventSubscriberInterface
         $this->subscriber = $subscriber;
     }
 
+    /**
+     * @param  CloudEvent          $event
+     * @throws ConnectionException
+     * @throws StreamException
+     */
     protected function acknowledge(CloudEvent $event): void
     {
         $this->subscriber->acknowledge($event);

@@ -2,6 +2,7 @@
 
 namespace LeNats\Tests\Mocks;
 
+use LeNats\Services\Connection;
 use LeNats\Subscription\Publisher;
 use LeNats\Subscription\Subscriber;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -11,6 +12,7 @@ class TestContainerPass implements CompilerPassInterface {
     private static $MUST_BE_PUBLIC = [
         Subscriber::class,
         Publisher::class,
+        Connection::class,
     ];
 
     public function process(ContainerBuilder $container) {

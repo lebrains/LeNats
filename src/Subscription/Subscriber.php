@@ -4,6 +4,7 @@ namespace LeNats\Subscription;
 
 use Google\Protobuf\Internal\Message;
 use LeNats\Events\CloudEvent;
+use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
 use LeNats\Exceptions\SubscriptionException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
@@ -20,8 +21,9 @@ class Subscriber extends SubscriptionMessageStreamer
     private static $unsubscribed = [];
 
     /**
-     * @param  CloudEvent      $event
+     * @param  CloudEvent          $event
      * @throws StreamException
+     * @throws ConnectionException
      */
     public function acknowledge(CloudEvent $event): void
     {
@@ -32,12 +34,13 @@ class Subscriber extends SubscriptionMessageStreamer
         $request->setSubject($subscription->getSubject());
         $request->setSequence($event->getSequenceId());
 
-        $this->getConnection()->publish($subscription->getAcknowledgeInbox(), $request);
+        $this->getStream()->publish($subscription->getAcknowledgeInbox(), $request);
     }
 
     /**
      * @throws StreamException
      * @throws SubscriptionNotFoundException
+     * @throws ConnectionException
      */
     public function unsubscribeAll(): void
     {
@@ -51,6 +54,7 @@ class Subscriber extends SubscriptionMessageStreamer
      * @param  int|null                      $quantity
      * @throws StreamException
      * @throws SubscriptionNotFoundException
+     * @throws ConnectionException
      */
     public function unsubscribe(string $sid, ?int $quantity = null): void
     {
@@ -74,28 +78,28 @@ class Subscriber extends SubscriptionMessageStreamer
             return;
         }
 
+        $config = $this->connection->getConfig();
+
         $request = new UnsubscribeRequest();
         $request->setSubject($subscription->getSubject());
         $request->setInbox($subscription->getAcknowledgeInbox());
         if ($subscription->getStartPosition() === StartPosition::NewOnly) {
-            $request->setDurableName($this->config->getClientId());
+            $request->setDurableName($config->getClientId());
         }
 
-        $request->setClientID($this->config->getClientId());
+        $request->setClientID($config->getClientId());
 
-        $this->getConnection()->publish(
-            $subscription->isUnsubscribe() ? $this->config->getUnsubRequests() : $this->config->getCloseRequests(),
+        $this->getStream()->publish(
+            $subscription->isUnsubscribe() ? $config->getUnsubRequests() : $config->getCloseRequests(),
             $request
-        )->then(function () use ($subscription): void {
-            $this->reset($subscription->getSid());
-        });
+        );
 
-        $this->getConnection()->runTimer($subscription->getSid(), $this->config->getWriteTimeout());
+        $this->reset($subscription->getSid());
     }
 
     protected function getPublishSubject(Subscription $subscription): string
     {
-        return $this->config->getSubRequests();
+        return $this->connection->getConfig()->getSubRequests();
     }
 
     /**
@@ -110,10 +114,10 @@ class Subscriber extends SubscriptionMessageStreamer
         $request->setSubject($subscription->getSubject());
 
         $request->setQGroup($subscription->getGroup() ?? '');
-        $request->setClientID($this->config->getClientId());
+        $request->setClientID($this->connection->getConfig()->getClientId());
         $request->setAckWaitInSecs($subscription->getAcknowledgeWait());
         $request->setMaxInFlight($subscription->getMaxInFlight());
-        $request->setDurableName($this->config->getClientId());
+        $request->setDurableName($this->connection->getConfig()->getClientId());
         $request->setInbox($subscription->getInbox());
         $request->setStartPosition($subscription->getStartPosition());
 

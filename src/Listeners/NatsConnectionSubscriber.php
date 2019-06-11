@@ -1,10 +1,10 @@
 <?php
 
-namespace LeNats\Subscribers;
+namespace LeNats\Listeners;
 
 use LeNats\Contracts\EventDispatcherAwareInterface;
-use LeNats\Events\Nats\Connected;
-use LeNats\Events\Nats\Connecting;
+use LeNats\Events\Nats\NatsConnected;
+use LeNats\Events\Nats\NatsStreamingConnected;
 use LeNats\Events\Nats\Pong;
 use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
@@ -13,7 +13,7 @@ use LeNats\Support\Dispatcherable;
 use LeNats\Support\Protocol;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class Authorization implements EventSubscriberInterface, EventDispatcherAwareInterface
+class NatsConnectionSubscriber implements EventSubscriberInterface, EventDispatcherAwareInterface
 {
     use Dispatcherable;
 
@@ -33,7 +33,7 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
     public static function getSubscribedEvents(): array
     {
         return [
-            Connecting::class => 'authorize',
+            NatsConnected::class => 'handle',
         ];
     }
 
@@ -41,7 +41,7 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
      * @throws ConnectionException
      * @throws StreamException
      */
-    public function authorize(): void
+    public function handle(): void
     {
         $config = $this->connection->getConfig();
 
@@ -61,25 +61,14 @@ class Authorization implements EventSubscriberInterface, EventDispatcherAwareInt
             throw new ConnectionException('Authorization payload invalid');
         }
 
-        $this->connection->write(Protocol::CONNECT, $payload)
-            ->then(
-                function (): void {
-                    $this->connection->ping()
-                        ->then(function (): void {
-                            $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
-                        });
-                },
-                static function (): void {
-                    throw new ConnectionException('Not connected');
-                }
-            );
-
-//        $this->connection->run();
+        $this->dispatcher->addListener(Pong::class, [$this, 'handleFirstPong']);
+        $this->connection->getStream()->write(Protocol::CONNECT, $payload);
+        $this->connection->getStream()->ping();
     }
 
     public function handleFirstPong(): void
     {
         $this->dispatcher->removeListener(Pong::class, [$this, 'handleFirstPong']);
-        $this->dispatch(new Connected());
+        $this->dispatch(new NatsStreamingConnected());
     }
 }

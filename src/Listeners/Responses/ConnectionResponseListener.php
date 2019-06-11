@@ -2,14 +2,17 @@
 
 namespace LeNats\Listeners\Responses;
 
-use LeNats\Events\Nats\MessageReceived;
+use LeNats\Contracts\EventDispatcherAwareInterface;
+use LeNats\Events\Nats\NatsConfigured;
+use LeNats\Events\Nats\SubscriptionMessageReceived;
 use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
-use LeNats\Support\Timer;
+use LeNats\Support\Dispatcherable;
 use NatsStreamingProtocol\ConnectResponse;
 
-class ConnectionResponseListener
+class ConnectionResponseListener implements EventDispatcherAwareInterface
 {
+    use Dispatcherable;
     /**
      * @var Configuration
      */
@@ -26,14 +29,14 @@ class ConnectionResponseListener
         $this->connection = $connection;
     }
 
-    public function handle(MessageReceived $message): void
+    public function handle(SubscriptionMessageReceived $message): void
     {
         $response = new ConnectResponse();
         $response->mergeFromString($message->payload);
 
         $this->config->configureConnection($response);
 
-        $this->connection->stopTimer(Timer::CONNECTION);
         $this->connection->stopTimer($message->subscription->getSid());
+        $this->dispatch(new NatsConfigured());
     }
 }

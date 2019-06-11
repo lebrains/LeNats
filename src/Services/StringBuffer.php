@@ -7,70 +7,60 @@ use LeNats\Contracts\BufferInterface;
 class StringBuffer implements BufferInterface
 {
     /** @var string */
-    private $buffer = '';
+    private static $buffer = '';
 
     /** @var string */
     private $eol;
-
-    /** @var int */
-    private $position = 0;
 
     public function __construct(string $eol = "\r\n")
     {
         $this->eol = $eol;
     }
 
-    public function get(?int $length = null, ?int $start = null): string
+    public function get(?int $length = null, ?int $start = null): ?string
     {
         $start = $start ?? 0;
+        $result = self::$buffer;
 
-        return $length ? substr($this->buffer, $start, $length) : $this->buffer;
+        if ($length) {
+            $result = substr(self::$buffer, $start, $length);
+
+            if (strlen($result) !== $length) {
+                return null;
+            }
+        }
+
+        return $result;
     }
 
     public function isEmpty(): bool
     {
-        return $this->buffer === '';
+        return self::$buffer === '';
     }
 
     public function append(string $data): void
     {
-        $this->buffer .= $data;
-        $this->resetPosition();
-    }
-
-    public function resetPosition(): void
-    {
-        $this->position = 0;
+        self::$buffer .= $data;
     }
 
     public function getLine(): ?string
     {
-        if (!$this->position) {
-            $this->position = 0;
+        $endPosition = strpos(self::$buffer, $this->eol);
 
-            $line = strtok($this->buffer, $this->eol);
-        } else {
-            $line = strtok($this->eol);
+        if ($endPosition === false) {
+            return null;
         }
 
-        ++$this->position;
-
-        if (!$line) {
-            $this->resetPosition();
-            $line = null;
-        }
-
-        return $line;
+        return $this->get($endPosition);
     }
 
     public function acknowledge(string $line): void
     {
-        $this->buffer = ltrim(substr($this->buffer, strlen($line)), $this->eol);
+        self::$buffer = ltrim(substr(self::$buffer, strlen($line)), $this->eol);
     }
 
     public function clear(): void
     {
-        $this->buffer = '';
-        $this->resetPosition();
+        self::$buffer = '';
     }
 }

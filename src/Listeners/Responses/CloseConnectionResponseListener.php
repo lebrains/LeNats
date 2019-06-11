@@ -2,10 +2,9 @@
 
 namespace LeNats\Listeners\Responses;
 
-use LeNats\Events\Nats\MessageReceived;
+use LeNats\Events\Nats\SubscriptionMessageReceived;
 use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
-use LeNats\Support\Timer;
 use NatsStreamingProtocol\CloseResponse;
 
 class CloseConnectionResponseListener
@@ -26,12 +25,11 @@ class CloseConnectionResponseListener
         $this->connection = $connection;
     }
 
-    public function handle(MessageReceived $message): void
+    public function handle(SubscriptionMessageReceived $message): void
     {
         $response = new CloseResponse();
         $response->mergeFromString($message->payload);
 
-        $this->connection->stopTimer(Timer::DISCONNECTION);
         $this->connection->stopTimer($message->subscription->getSid());
     }
 }

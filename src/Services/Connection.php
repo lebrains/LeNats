@@ -2,37 +2,36 @@
 
 namespace LeNats\Services;
 
-use Google\Protobuf\Internal\Message as ProtoMessage;
+use function Clue\React\Block\await;
 use LeNats\Contracts\EventDispatcherAwareInterface;
+use LeNats\Events\Nats\NatsConfigured;
 use LeNats\Events\React\Close;
 use LeNats\Events\React\Data;
 use LeNats\Events\React\End;
 use LeNats\Events\React\Error;
 use LeNats\Exceptions\ConnectionException;
-use LeNats\Exceptions\StreamException;
 use LeNats\Support\Dispatcherable;
-use LeNats\Support\Protocol;
-use LeNats\Support\Timer;
-use NatsStreamingProtocol\SubscriptionRequest;
+use LeNats\Support\Stream;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
-use React\Promise\FulfilledPromise;
-use React\Promise\Promise;
-use React\Promise\PromiseInterface;
-use React\Promise\RejectedPromise;
-use function React\Promise\Timer\timeout;
-use React\Socket\ConnectionInterface;
-use React\Socket\Connector;
 
 class Connection implements EventDispatcherAwareInterface
 {
     use Dispatcherable;
 
-    /** @var ConnectionInterface */
+    /** @var Stream|null */
     protected $stream;
+
+    /** @var array */
+    private static $forwardedEvents = [
+        Data::class  => 'data',
+        End::class   => 'end',
+        Error::class => 'error',
+        Close::class => 'close',
+    ];
 
     /**
      * @var Configuration
@@ -41,9 +40,6 @@ class Connection implements EventDispatcherAwareInterface
 
     /** @var LoopInterface */
     private $loop;
-
-    /** @var PromiseInterface */
-    private $promise;
 
     /** @var TimerInterface[] */
     private $timers = [];
@@ -67,7 +63,7 @@ class Connection implements EventDispatcherAwareInterface
 
     public function __destruct()
     {
-        if ($this->isConnected()) {
+        if ($this->stream !== null) {
             $this->dispatch(new End('See you soon!'));
         }
     }
@@ -82,21 +78,6 @@ class Connection implements EventDispatcherAwareInterface
         $this->shutdown = $shutdown;
     }
 
-    /**
-     * @param  int                 $timeout
-     * @throws ConnectionException
-     */
-    public function open(int $timeout): void
-    {
-        $this->connect($timeout);
-
-        $this->runTimer(Timer::CONNECTION, $timeout);
-
-        if ($this->stream === null) {
-            throw new ConnectionException('Not connected');
-        }
-    }
-
     public function runTimer(string $timerName, int $timeout): void
     {
         $this->timers[$timerName] = $this->getLoop()->addTimer($timeout, function () use ($timerName): void {
@@ -108,16 +89,21 @@ class Connection implements EventDispatcherAwareInterface
 
     public function run(): void
     {
-        if (!$this->running) {
-            $this->running = true;
-
-            $this->getLoop()->run();
+        if ($this->running) {
+            return;
         }
+
+        $this->running = true;
+        $this->getLoop()->run();
     }
 
+    /**
+     * @throws ConnectionException
+     * @return bool
+     */
     public function isConnected(): bool
     {
-        return $this->stream !== null && $this->stream->isReadable() && $this->stream->isWritable();
+        return $this->stream !== null && $this->getStream()->isConnected();
     }
 
     public function stopTimer(string $timerName): void
@@ -153,90 +139,9 @@ class Connection implements EventDispatcherAwareInterface
         return $this->config;
     }
 
-    /**
-     * @throws StreamException
-     * @return PromiseInterface|Promise
-     */
-    public function ping()
-    {
-        return $this->write(Protocol::PING);
-    }
-
-    /**
-     * @param  string                   $method
-     * @param  string|array|null        $params
-     * @param  string|null              $payload
-     * @throws StreamException
-     * @return PromiseInterface|Promise
-     */
-    public function write(string $method, $params = null, ?string $payload = null)
-    {
-        if (!in_array($method, Protocol::getClientMethods(), true)) {
-            throw new StreamException('Method not exists: ' . $method);
-        }
-
-        $message = $method;
-
-        if ($params) {
-            if (is_array($params)) {
-                $params = implode(Protocol::SPC, $params);
-            }
-
-            $message .= Protocol::SPC . $params;
-
-            if ($payload !== null) {
-                $message .= Protocol::SPC;
-
-                $message .= strlen($payload) . Protocol::CR_LF . $payload;
-            }
-        }
-
-        $message .= Protocol::CR_LF;
-
-        if ($this->logger && getenv('APP_ENV') === 'dev') {
-            $this->logger->info('<<<< ' . $message);
-        }
-
-        $deferred = new Deferred();
-
-        $this->getLoop()->futureTick(function () use ($message, $deferred): void {
-            $result = $this->stream->write($message);
-
-            if ($result) {
-                $deferred->resolve();
-            } else {
-                $deferred->reject(new ConnectionException('Write message error'));
-            }
-        });
-
-        return $deferred->promise();
-    }
-
-    /**
-     * @param  string                   $subject
-     * @param  string|ProtoMessage|null $payload
-     * @param  string|null              $inbox
-     * @throws StreamException
-     * @return PromiseInterface|Promise
-     */
-    public function publish(string $subject, $payload = null, ?string $inbox = null)
-    {
-        $params = [$subject];
-
-        if ($inbox) {
-            $params[] = $inbox;
-        }
-
-        if (is_object($payload) && $payload instanceof ProtoMessage) {
-            $payload = $payload->serializeToString();
-        }
-
-        return $this->write(Protocol::PUB, $params, $payload);
-    }
-
     public function close(): void
     {
-        $this->stream->close();
+        $this->stream = null;
     }
 
     public function getLoop(): LoopInterface
@@ -248,57 +153,57 @@ class Connection implements EventDispatcherAwareInterface
         return $this->loop = LoopFactory::create();
     }
 
-    /**
-     * @param  int|null                                                            $timeout
-     * @throws ConnectionException
-     * @return FulfilledPromise|Promise|PromiseInterface|RejectedPromise|Connector
-     */
-    private function connect(?int $timeout = null)
+    public function setLoop(LoopInterface $loop): void
     {
-        $this->setShutdown(false);
-
-        $connector = new Connector($this->getLoop(), $this->config->getContext());
-        $uri = $this->config->getDsn();
-
-        $connectionPromise = $connector->connect($uri);
-
-        if ($connectionPromise === null) {
-            throw new ConnectionException('Can`t connect');
-        }
-
-        $connectionPromise->then(
-            function (ConnectionInterface $connection): void {
-                $this->stream = $connection;
-                $this->forwardEvents();
-            },
-            static function ($reason): void {
-                throw new ConnectionException($reason);
-            }
-        );
-
-        if ($timeout) {
-            $timeoutPromise = timeout($connectionPromise, $timeout, $this->getLoop());
-        }
-
-        return $timeoutPromise ?? $connectionPromise;
+        $this->loop = $loop;
     }
 
-    private function forwardEvents(): void
+    /**
+     * @throws ConnectionException
+     * @throws \Exception
+     * @return Stream
+     */
+    public function getStream(): Stream
     {
-        $this->stream->on('data', function ($data): void {
-            $this->dispatch(new Data($data));
-        });
+        if ($this->stream === null) {
+            $this->setShutdown(false);
 
-        $this->stream->on('end', function (): void {
-            $this->dispatch(new End());
-        });
+            $stream = Stream::connect($this->getLoop(), $this->getConfig());
 
-        $this->stream->on('error', function ($error): void {
-            $this->dispatch(new Error($error));
-        });
+            $this->stream = $stream;
+            $this->configureStream($stream);
 
-        $this->stream->on('close', function (): void {
-            $this->dispatch(new Close());
-        });
+            $deferred = new Deferred();
+
+            $this->dispatcher->addListener(NatsConfigured::class, static function () use ($deferred): void {
+                $deferred->resolve();
+            });
+
+            await($deferred->promise(), $this->getLoop(), $this->config->getConnectionTimeout());
+        }
+
+        return $this->stream;
+    }
+
+    public function setStream(Stream $stream): void
+    {
+        $this->stream = $stream;
+    }
+
+    public function configureStream(
+        Stream $stream,
+        array $forwardEvents = [Data::class, End::class, Error::class, Close::class]
+    ): void {
+        $stream->setLogger($this->logger);
+
+        foreach ($forwardEvents as $eventClass) {
+            $event = static::$forwardedEvents[$eventClass] ?? null;
+
+            if ($event !== null) {
+                $stream->on($event, function ($data = null) use ($eventClass): void {
+                    $this->dispatch(new $eventClass($data));
+                });
+            }
+        }
     }
 }

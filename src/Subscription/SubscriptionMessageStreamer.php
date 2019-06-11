@@ -9,7 +9,6 @@ use LeNats\Exceptions\StreamException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\Inbox;
-use function React\Promise\all;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
@@ -23,59 +22,47 @@ abstract class SubscriptionMessageStreamer extends MessageStreamer implements Ev
 
     /**
      * @param  Subscription    $subscription
-     * @param  callable|null   $onSuccess
      * @throws StreamException
      * @throws Exception
      * @return static
      */
-    public function subscribe(Subscription $subscription, ?callable $onSuccess = null): self
+    public function subscribe(Subscription $subscription): self
     {
         $subscription->setSid($this->generator->generateString(16));
         $this->storeSubscription($subscription);
-
-        $promises = [];
 
         if ($this->getMessageListenerClass() !== null) {
             $this->registerListener($subscription->getSid(), $this->getMessageListenerClass(), 100);
         }
 
-        $promises[] = $this->send($subscription->getInbox(), $subscription->getSid())
-            ->then(function () use ($subscription): void {
-                if ($subscription->getMessageLimit()) {
-                    $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
-                }
-            });
+        $this->createSubscriptionInbox($subscription->getInbox(), $subscription->getSid());
+        if ($subscription->getMessageLimit()) {
+            $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
+        }
 
         $requestInbox = Inbox::newInbox();
 
         $sid = $this->generator->generateString(16);
         $this->storeSubscription($subscription, $sid);
 
-        $promises[] = $this->send($requestInbox, $sid)->then(function () use ($sid): void {
-            $this->unsubscribe($sid, 1);
-        });
-
         $this->registerListener($sid, $this->getResponseListenerClass());
         $this->registerListener($sid, function () use ($sid): void {
             $this->reset($sid);
         });
 
-        $promises[] = $this->getConnection()->publish(
+        $this->createSubscriptionInbox($requestInbox, $sid);
+        $this->unsubscribe($sid, 1);
+
+        $this->getStream()->publish(
             $this->getPublishSubject($subscription),
             $this->getRequest($subscription),
             $requestInbox
         );
 
-        if ($onSuccess) {
-            $onSuccess($subscription);
-        }
-
-        all($promises);
-
         if ($subscription->getTimeout()) {
-            $this->getConnection()->runTimer($subscription->getSid(), $subscription->getTimeout());
+            $this->connection->runTimer($subscription->getSid(), $subscription->getTimeout());
         } else {
-            $this->getConnection()->run();
+            $this->connection->run();
         }
 
         return $this;
@@ -138,7 +125,7 @@ abstract class SubscriptionMessageStreamer extends MessageStreamer implements Ev
     {
         unset(self::$subscriptions[$sid]);
 
-        $this->getConnection()->stopTimer($sid);
+        $this->connection->stopTimer($sid);
 
         $eventName = $eventName ?? $sid;
 

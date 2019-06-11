@@ -12,7 +12,7 @@ class Connector extends SubscriptionMessageStreamer
     protected function getRequest(Subscription $subscription): Message
     {
         $request = new ConnectRequest();
-        $request->setClientID($this->config->getClientId());
+        $request->setClientID($this->connection->getConfig()->getClientId());
         $request->setHeartbeatInbox($subscription->getInbox());
 
         return $request;

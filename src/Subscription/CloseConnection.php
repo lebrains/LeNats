@@ -11,7 +11,7 @@ class CloseConnection extends SubscriptionMessageStreamer
     protected function getRequest(Subscription $subscription): Message
     {
         $request = new CloseRequest();
-        $config = $this->getConnection()->getConfig();
+        $config = $this->connection->getConfig();
         $request->setClientID($config->getClientId());
 
         return $request;
@@ -19,7 +19,7 @@ class CloseConnection extends SubscriptionMessageStreamer
 
     protected function getPublishSubject(Subscription $subscription): string
     {
-        return $this->config->getCloseRequests();
+        return $this->connection->getConfig()->getCloseRequests();
     }
 
     protected function getMessageListenerClass(): ?string

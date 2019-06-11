@@ -2,17 +2,15 @@
 
 namespace LeNats\Subscription;
 
-use Closure;
 use Exception;
+use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
-use LeNats\Services\Configuration;
 use LeNats\Services\Connection;
 use LeNats\Support\Protocol;
 use LeNats\Support\RandomGenerator;
+use LeNats\Support\Stream;
 use RandomLib\Factory;
 use RandomLib\Generator;
-use React\Promise\Promise;
-use React\Promise\PromiseInterface;
 
 abstract class MessageStreamer
 {
@@ -20,19 +18,13 @@ abstract class MessageStreamer
     protected $generator;
 
     /**
-     * @var Configuration
-     */
-    protected $config;
-
-    /**
      * @var Connection
      */
-    private $connection;
+    protected $connection;
 
-    public function __construct(Connection $connection, Configuration $config)
+    public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->config = $config;
 
         if (PHP_VERSION_ID > 70000) {
             $this->generator = new RandomGenerator();
@@ -43,9 +35,10 @@ abstract class MessageStreamer
     }
 
     /**
-     * @param  string          $sid
-     * @param  int|null        $quantity
+     * @param  string              $sid
+     * @param  int|null            $quantity
      * @throws StreamException
+     * @throws ConnectionException
      */
     public function unsubscribe(string $sid, ?int $quantity = null): void
     {
@@ -55,44 +48,33 @@ abstract class MessageStreamer
             $params[] = $quantity;
         }
 
-        $this->getConnection()->write(Protocol::UNSUB, $params);
-    }
-
-    protected function getConnection(): Connection
-    {
-        if (!$this->connection->isConnected()) {
-            $this->connection->open($this->config->getConnectionTimeout());
-        }
-
-        return $this->connection;
+        $this->getStream()->write(Protocol::UNSUB, $params);
     }
 
     /**
-     * @param  string                   $subject
-     * @param  string|callable|null     $sid
-     * @param  callable|null            $onSuccess
-     * @throws StreamException
-     * @throws Exception
-     * @return PromiseInterface|Promise
+     * @throws ConnectionException
+     * @return Stream
      */
-    protected function send(string $subject, $sid = null, ?callable $onSuccess = null)
+    protected function getStream(): Stream
     {
-        if ($sid instanceof Closure) {
-            [$onSuccess, $sid] = [$sid, null];
-        }
+        return $this->connection->getStream();
+    }
 
+    /**
+     * @param  string          $inbox
+     * @param  string          $sid
+     * @throws Exception
+     * @throws StreamException
+     * @return string
+     */
+    protected function createSubscriptionInbox(string $inbox, ?string $sid = null): string
+    {
         if ($sid === null) {
             $sid = $this->generator->generateString(16);
         }
 
-        $promise = $this->getConnection()->write(Protocol::SUB, [$subject, $sid]);
+        $this->getStream()->write(Protocol::SUB, [$inbox, $sid]);
 
-        if ($onSuccess) {
-            $promise->then(static function () use ($sid, $onSuccess): void {
-                $onSuccess($sid);
-            });
-        }
-
-        return $promise;
+        return $sid;
     }
 }

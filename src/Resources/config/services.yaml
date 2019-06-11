@@ -8,12 +8,12 @@ services:
     tags:
       - { name: jms_serializer.subscribing_handler }
 
+  LeNats\:
+    resource: '../../{Services,Listeners,Commands}'
+
   LeNats\Listeners\:
     public: true
-    resource: '../../Listeners'
-
-  LeNats\:
-    resource: '../../{Services,Subscribers,Commands}'
+    resource: '../../Listeners/{*Listener.php,Responses/*Listener.php}'
 
   LeNats\Contracts\BufferInterface: '@LeNats\Services\StringBuffer'
 

@@ -1,33 +1,33 @@
 <?php
 
-namespace LeNats\Subscribers;
+namespace LeNats\Listeners;
 
 use LeNats\Contracts\BufferInterface;
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\Nats\BufferUpdated;
-use LeNats\Events\Nats\Connecting;
 use LeNats\Events\Nats\Info;
-use LeNats\Events\Nats\MessageReceived;
+use LeNats\Events\Nats\NatsConnected;
 use LeNats\Events\Nats\Ping;
 use LeNats\Events\Nats\Pong;
+use LeNats\Events\Nats\UndefinedMessageReceived;
 use LeNats\Events\React\Data;
 use LeNats\Events\React\Error;
-use LeNats\Exceptions\NatsException;
 use LeNats\Exceptions\StreamException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Subscription\Subscriber;
+use LeNats\Subscription\Subscription;
 use LeNats\Support\Dispatcherable;
 use LeNats\Support\Protocol;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class MessageProcessor implements EventSubscriberInterface, EventDispatcherAwareInterface
+class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispatcherAwareInterface
 {
     use Dispatcherable;
 
     /** @var array */
     private static $commandEvents = [
-        Protocol::INFO => [Info::class, Connecting::class],
+        Protocol::INFO => [Info::class, NatsConnected::class],
         Protocol::MSG  => [],
         Protocol::PING => [Ping::class],
         Protocol::PONG => [Pong::class],
@@ -85,11 +85,14 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 
     public function bufferize(Data $event): void
     {
-        $this->buffer->append($event->data);
+        $this->buffer->append($event->message);
 
         $this->dispatch(new BufferUpdated());
     }
 
+    /**
+     * @throws StreamException
+     */
     public function processBuffer(): void
     {
         $buffer = $this->buffer;
@@ -98,34 +101,28 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
             $handled = false;
             $commands = Protocol::getServerMethods();
 
-            while (!$handled && $command = array_pop($commands)) {
+            while (!$handled && $command = array_shift($commands)) {
                 if (strpos($line, $command) !== 0) {
                     continue;
-                }
-
-                if (!array_key_exists($command, self::$commandEvents)) {
-                    break;
                 }
 
                 $args = [$line];
 
                 if ($command === Protocol::MSG) {
+                    if (!$message = $this->getFullMessage($line)) {
+                        // Wait for next tick - buffer has not full message
+                        return;
+                    }
+
+                    $line .= Protocol::CR_LF . $message->payload;
+                    $buffer->acknowledge($line);
+
                     try {
-                        if (!$message = $this->getFullMessage($line)) {
-                            // Wait for next tick - buffer has not full message
-                            return;
-                        }
+                        $subscription = $this->getSubscription($message->sid);
 
-                        $line .= Protocol::CR_LF . $message[1];
-                        $buffer->acknowledge($line);
-
-                        $subscription = $this->subscriber->getSubscription($message[0]);
-
-                        $this->dispatch(new MessageReceived($subscription, $message[1]), $message[0]);
+                        $this->dispatch($message->toSubscribtion($subscription), $message->sid);
                     } catch (SubscriptionNotFoundException $e) {
-                        // ignore
-                    } catch (NatsException $e) {
-                        $this->dispatch(new Error($e->getMessage()));
+                        $this->dispatch($message);
                     }
                 } else {
                     $buffer->acknowledge($line);
@@ -148,17 +145,27 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
             }
 
             if (!$handled) {
-                $this->dispatch(new Error('Message not handled: ' . $line));
+                throw new StreamException('Message not handled: ' . $line);
             }
         }
     }
 
     /**
-     * @param  string          $rawMessage
-     * @throws StreamException
-     * @return array
+     * @param  string                        $sid
+     * @throws SubscriptionNotFoundException
+     * @return Subscription
      */
-    private function getFullMessage(string $rawMessage): ?array
+    protected function getSubscription(string $sid): Subscription
+    {
+        return $this->subscriber->getSubscription($sid);
+    }
+
+    /**
+     * @param  string                        $rawMessage
+     * @throws StreamException
+     * @return UndefinedMessageReceived|null
+     */
+    private function getFullMessage(string $rawMessage): ?UndefinedMessageReceived
     {
         $buffer = $this->buffer;
         $message = explode(Protocol::SPC, $rawMessage, 5);
@@ -174,13 +181,12 @@ class MessageProcessor implements EventSubscriberInterface, EventDispatcherAware
 
         if ($length > 0) {
             $payload = $buffer->get($length, strlen($rawMessage) + strlen(Protocol::CR_LF));
-            $buffer->resetPosition();
 
-            if (strlen($payload) !== $length) {
-                return null;
+            if ($payload === null) {
+                return $payload;
             }
         }
 
-        return [$sid, $payload, $subject, $replay];
+        return new UndefinedMessageReceived($sid, $payload, $subject, $replay);
     }
 }

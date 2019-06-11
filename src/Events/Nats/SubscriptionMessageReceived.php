@@ -5,7 +5,7 @@ namespace LeNats\Events\Nats;
 use LeNats\Events\Event;
 use LeNats\Subscription\Subscription;
 
-class MessageReceived extends Event
+class SubscriptionMessageReceived extends Event
 {
     /** @var string */
     public $payload;

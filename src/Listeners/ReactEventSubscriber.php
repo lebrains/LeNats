@@ -1,13 +1,16 @@
 <?php
 
-namespace LeNats\Subscribers;
+namespace LeNats\Listeners;
 
 use LeNats\Contracts\EventDispatcherAwareInterface;
 use LeNats\Events\Nats\Pong;
 use LeNats\Events\React\Close;
 use LeNats\Events\React\End;
 use LeNats\Events\React\Error;
+use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\NatsException;
+use LeNats\Exceptions\StreamException;
+use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Services\Connection;
 use LeNats\Subscription\CloseConnection;
 use LeNats\Subscription\Subscriber;
@@ -65,20 +68,39 @@ class ReactEventSubscriber implements EventSubscriberInterface, EventDispatcherA
         ];
     }
 
+    /**
+     * @param Close $event
+     */
     public function onClose(Close $event): void
     {
-        if ($this->connection->isConnected()) {
-            $this->verboseLog('CLOSE: connection closed');
-        }
+        $event->stopPropagation();
 
         $this->verboseLog('CLOSE. ' . $event->message);
+
+        $this->connection->close();
 
         $this->connection->stopAll();
     }
 
+    /**
+     * @param  End                           $event
+     * @throws ConnectionException
+     * @throws StreamException
+     * @throws SubscriptionNotFoundException
+     */
     public function onEnd(End $event): void
     {
-        $this->gracefulShutdown();
+        $event->stopPropagation();
+
+        if ($this->connection->isConnected() && !$this->connection->isShutdown()) {
+            $this->connection->setShutdown(true);
+            $this->subscriber->unsubscribeAll();
+
+            $subscription = new Subscription(Inbox::newInbox());
+            $this->closeConnection->subscribe($subscription);
+
+            $this->verboseLog('Shutdown. Unsubscribed and closed connection');
+        }
 
         $this->verboseLog('END. ' . $event->message);
     }
@@ -101,20 +123,6 @@ class ReactEventSubscriber implements EventSubscriberInterface, EventDispatcherA
     public function onPong(Pong $event): void
     {
         $this->verboseLog('PONG handled');
-    }
-
-    private function gracefulShutdown(): void
-    {
-        if ($this->connection->isConnected() && !$this->connection->isShutdown()) {
-            $this->connection->setShutdown(true);
-            $this->subscriber->unsubscribeAll();
-
-            $subscription = new Subscription(Inbox::newInbox());
-            $this->closeConnection->subscribe($subscription);
-            $this->connection->close();
-
-            $this->verboseLog('Shutdown. Unsubscribed and closed connection');
-        }
     }
 
     private function verboseLog(string $message): void

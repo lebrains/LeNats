@@ -1,8 +1,8 @@
 <?php
 
-namespace LeNats\Subscribers;
+namespace LeNats\Listeners;
 
-use LeNats\Events\Nats\Connected;
+use LeNats\Events\Nats\NatsStreamingConnected;
 use LeNats\Exceptions\StreamException;
 use LeNats\Services\Configuration;
 use LeNats\Subscription\Connector;
@@ -10,7 +10,7 @@ use LeNats\Subscription\Subscription;
 use LeNats\Support\Inbox;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class Registration implements EventSubscriberInterface
+class NatsStreamingConnectionSubscriber implements EventSubscriberInterface
 {
     /**
      * @var Configuration
@@ -49,7 +49,7 @@ class Registration implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            Connected::class => 'handle',
+            NatsStreamingConnected::class => 'handle',
         ];
     }
 
