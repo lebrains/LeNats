@@ -25,6 +25,8 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
 {
     use Dispatcherable;
 
+    private const MAX_MESSAGES_IN_ONE_TICK = 10;
+
     /** @var array */
     private static $commandEvents = [
         Protocol::INFO => [Info::class, NatsConnected::class],
@@ -96,8 +98,9 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
     public function processBuffer(): void
     {
         $buffer = $this->buffer;
+        $processed = 0;
 
-        while ($line = $buffer->getLine()) {
+        while (($line = $buffer->getLine()) && (self::MAX_MESSAGES_IN_ONE_TICK > $processed)) {
             $handled = false;
             $commands = Protocol::getServerMethods();
 
@@ -138,6 +141,7 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
                 }
 
                 $handled = true;
+                ++$processed;
 
                 if ($this->logger && $this->subscriber->getConnection()->getConfig()->isDebug()) {
                     $this->logger->info(sprintf('>>>> %s ...', substr($line, 0, 80)));

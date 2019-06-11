@@ -111,10 +111,12 @@ class SubscribeCommand extends Command
         }
 
         try {
+            $start = microtime(true);
             $this->subscriber->subscribe($subscription);
 
             $output->write('Received:' . $subscription->getReceived(), true);
             $output->write('Processed:' . $subscription->getProcessed(), true);
+            $output->write('In:' . (microtime(true) - $start), true);
         } catch (\Throwable $e) {
             $output->write('Finished with exception:' . $e->getMessage());
 
