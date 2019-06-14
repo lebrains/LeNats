@@ -5,6 +5,7 @@ namespace LeNats\Subscription;
 use Exception;
 use JMS\Serializer\SerializerInterface;
 use LeNats\Events\CloudEvent;
+use LeNats\Exceptions\ConnectionException;
 use LeNats\Exceptions\StreamException;
 use LeNats\Services\Connection;
 use LeNats\Support\Inbox;
@@ -36,14 +37,16 @@ class Publisher extends MessageStreamer
     }
 
     /**
-     * @param  CloudEvent      $event
-     * @throws StreamException
-     * @throws Exception
+     * @param CloudEvent $event
+     * @param string|null $subject
      * @return string
+     * @throws StreamException
+     * @throws ConnectionException
+     * @throws Exception
      */
-    public function publish(CloudEvent $event): string
+    public function publish(CloudEvent $event, ?string $subject = null): string
     {
-        $subject = empty($this->suffixes) ? $event->getType() : str_replace($this->suffixes, '', $event->getType());
+        $subject = $subject ?? (empty($this->suffixes) ? $event->getType() : str_replace($this->suffixes, '', $event->getType()));
 
         $guid = $this->generator->generateString(16);
 

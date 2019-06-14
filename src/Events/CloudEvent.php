@@ -23,6 +23,7 @@ class CloudEvent extends Event
      * @var string
      * @Serializer\Expose()
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("specversion")
      */
     private $specVersion = '0.3';
 
@@ -68,6 +69,7 @@ class CloudEvent extends Event
      * @var string
      * @Serializer\Expose()
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("datacontenttype")
      */
     private $dataContentType = 'application/json';
 
