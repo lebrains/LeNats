@@ -1,16 +1,16 @@
 <?php
 
-namespace LeNats\Events;
+namespace LeNats\Events\Fake;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use JMS\Serializer\Annotation as Serializer;
 use LeNats\Subscription\Subscription;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @Serializer\ExclusionPolicy("ALL")
  */
-class CloudEvent extends Event
+class CloudEvent
 {
     /**
      * @var mixed

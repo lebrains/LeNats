@@ -13,6 +13,7 @@ use LeNats\Services\EventTypeResolver;
 use LeNats\Subscription\Subscriber;
 use LeNats\Support\Dispatcherable;
 use NatsStreamingProtocol\MsgProto;
+use LeNats\Events\Fake\CloudEvent as FakeCloudEvent;
 
 class SubscriptionListener implements EventDispatcherAwareInterface
 {
@@ -67,11 +68,29 @@ class SubscriptionListener implements EventDispatcherAwareInterface
         $eventType = $data['type'];
         unset($data);
 
-        $eventClass = $this->typeResolver->getClass($eventType) ?? CloudEvent::class;
+        $defaultClass = CloudEvent::class;
+
+        if (!class_exists('Symfony\Contracts\EventDispatcher\Event')) {
+            $defaultClass = FakeCloudEvent::class;
+        }
+
+        $eventClass = $this->typeResolver->getClass($eventType) ?? $defaultClass;
 
         $cloudEvent = $this->serializer->deserialize($message->getData(), $eventClass, 'json');
-        if (!($cloudEvent instanceof CloudEvent)) {
+        if (!($cloudEvent instanceof CloudEvent) && !($cloudEvent instanceof FakeCloudEvent)) {
             throw new SubscriptionException($eventClass . ' must be instance of CloudEvent');
+        }
+
+        if ($cloudEvent instanceof FakeCloudEvent) {
+            $realCloudEvent = new CloudEvent();
+            $realCloudEvent->setData($cloudEvent->getData());
+            $realCloudEvent->setSpecVersion($cloudEvent->getSpecVersion());
+            $realCloudEvent->setType($cloudEvent->getType());
+            $realCloudEvent->setSource($cloudEvent->getSource());
+            $realCloudEvent->setId($cloudEvent->getId());
+            $realCloudEvent->setTime($cloudEvent->getTime());
+
+            $cloudEvent = $realCloudEvent;
         }
 
         $subscription = $event->subscription;
