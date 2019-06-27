@@ -4,9 +4,17 @@ namespace LeNats\Events;
 
 use Psr\EventDispatcher\StoppableEventInterface;
 use Symfony\Component\EventDispatcher\Event as BaseEvent;
+use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * @Serializer\ExclusionPolicy("ALL")
+ */
 abstract class Event extends BaseEvent implements StoppableEventInterface
 {
+    /**
+     * @var bool
+     * @Serializer\Exclude()
+     */
     protected $propagationStopped = false;
 
     /**
