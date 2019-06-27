@@ -13,6 +13,11 @@ use LeNats\Subscription\Subscription;
 class CloudEvent extends Event
 {
     /**
+     * @var bool
+     * @Serializer\Exclude()
+     */
+    protected $propagationStopped = false;
+    /**
      * @var mixed
      * @Serializer\Expose()
      * @Serializer\Type("array")
