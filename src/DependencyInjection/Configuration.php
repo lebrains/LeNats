@@ -39,6 +39,8 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('dsn')->isRequired()->end()
             ->scalarNode('client_id')->isRequired()->end()
             ->scalarNode('cluster_id')->isRequired()->end()
+            ->scalarNode('user')->defaultValue(null)->end()
+            ->scalarNode('pass')->defaultValue(null)->end()
             ->booleanNode('verbose')->defaultFalse()->end()
             ->integerNode('connection_timeout')->defaultValue(30)->end()
             ->integerNode('write_timeout')->defaultValue(5)->end()

@@ -177,11 +177,13 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
     {
         $buffer = $this->buffer;
         $message = explode(Protocol::SPC, $rawMessage, 5);
+
+        if (empty($message) || count($message) < 4) {
+            return null;
+        }
+
         array_shift($message);
 
-        if (count($message) < 3) {
-            throw new StreamException('Wrong message format: ' . $rawMessage);
-        }
         $length = (int)array_pop($message);
         $message = array_pad($message, 3, null);
         [$subject, $sid, $replay] = $message;

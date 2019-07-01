@@ -79,15 +79,6 @@ class MessageProcessorTest extends TestCase
     }
 
     /** @test */
-    public function it_throws_exception_on_wrong_message(): void
-    {
-        $this->expectException(StreamException::class);
-        $this->expectExceptionMessage('Wrong message format:');
-
-        $this->processor->bufferize(new Data("MSG test\r\n"));
-    }
-
-    /** @test */
     public function it_processes_message()
     {
         $this->assertEventHandled(UndefinedMessageReceived::class, function () {
