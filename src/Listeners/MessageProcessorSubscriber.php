@@ -104,7 +104,9 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
             $handled = false;
             $commands = Protocol::getServerMethods();
 
-            while (!$handled && $command = array_shift($commands)) {
+            while (!$handled && !empty($commands)) {
+                $command = array_shift($commands);
+
                 if (strpos($line, $command) !== 0) {
                     continue;
                 }
