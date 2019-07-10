@@ -2,6 +2,7 @@
 
 namespace LeNats\Tests;
 
+use LeNats\Services\Configuration;
 use LeNats\Support\Stream;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
@@ -36,11 +37,13 @@ abstract class TestCase extends KernelTestCase
         return static::$kernel->getContainer();
     }
 
-    protected function getStream(): Stream
+    protected function getStream(?Configuration $config = null): Stream
     {
+        $config = $config ?? new Configuration();
+
         $stream = new ReactConnection($this->resource, $this->loop);
 
-        return new Stream($stream, $this->loop);
+        return new Stream($stream, $this->loop, $config);
     }
 
     protected function assertEventHandled(string $event, callable $emitter): void

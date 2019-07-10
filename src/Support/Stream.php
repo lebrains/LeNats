@@ -33,10 +33,16 @@ class Stream
      */
     private $writeTimeout;
 
-    public function __construct(ConnectionInterface $stream, LoopInterface $loop)
+    /**
+     * @var Configuration
+     */
+    private $config;
+
+    public function __construct(ConnectionInterface $stream, LoopInterface $loop, Configuration $config)
     {
         $this->stream = $stream;
         $this->loop = $loop;
+        $this->config = $config;
     }
 
     public function __destruct()
@@ -70,7 +76,7 @@ class Stream
 
         $stream = await($connectionPromise, $loop, $config->getConnectionTimeout());
 
-        $instance = new static($stream, $loop);
+        $instance = new static($stream, $loop, $config);
 
         $instance->setWriteTimeout($config->getWriteTimeout());
 
@@ -114,7 +120,12 @@ class Stream
         $deferred = new Deferred();
 
         $this->loop->futureTick(function () use ($message, $deferred): void {
-            $result = $this->stream->write($message);
+            $chunks = str_split($message, $this->config->getMaxPayload());
+            $result = true;
+
+            foreach ($chunks as $chunk) {
+                $result &= $this->stream->write($chunk);
+            }
 
             if ($result) {
                 $deferred->resolve($result);

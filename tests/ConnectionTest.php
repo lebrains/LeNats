@@ -34,7 +34,7 @@ class ConnectionTest extends TestCase
 
         $connection = $this->getContainer()->get(Connection::class);
         $connection->setLoop($this->loop);
-        $stream = $this->getStream();
+        $stream = $this->getStream($connection->getConfig());
         $connection->setStream($stream);
         $connection->configureStream($stream, [Data::class]);
 

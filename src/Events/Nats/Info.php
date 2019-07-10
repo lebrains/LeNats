@@ -6,11 +6,11 @@ use LeNats\Events\Event;
 
 class Info extends Event
 {
-    /** @var string */
+    /** @var array */
     public $message;
 
     public function __construct(string $message)
     {
-        $this->message = $message;
+        $this->message = json_decode($message, true);
     }
 }
