@@ -3,7 +3,6 @@
 namespace LeNats\Listeners;
 
 use LeNats\Contracts\EventDispatcherAwareInterface;
-use LeNats\Events\Nats\Info;
 use LeNats\Events\Nats\NatsConnected;
 use LeNats\Events\Nats\NatsStreamingConnected;
 use LeNats\Events\Nats\Pong;
@@ -34,7 +33,6 @@ class NatsConnectionSubscriber implements EventSubscriberInterface, EventDispatc
     public static function getSubscribedEvents(): array
     {
         return [
-            Info::class => 'updateConfiguration',
             NatsConnected::class => 'handle',
         ];
     }
@@ -72,14 +70,5 @@ class NatsConnectionSubscriber implements EventSubscriberInterface, EventDispatc
     {
         $this->dispatcher->removeListener(Pong::class, [$this, 'handleFirstPong']);
         $this->dispatch(new NatsStreamingConnected());
-    }
-
-    public function updateConfiguration(Info $event)
-    {
-        $maxPayload = $event->message['max_payload'] ?? 0;
-
-        if ($maxPayload > 0) {
-            $this->connection->getConfig()->setMaxPayload($maxPayload);
-        }
     }
 }

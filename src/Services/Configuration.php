@@ -73,8 +73,6 @@ class Configuration
     /** @var bool */
     private $debug = false;
 
-    private $maxPayload = 1048576;
-
     public function __construct(?array $config = null)
     {
         $config = $config ?? [];
@@ -343,21 +341,5 @@ class Configuration
     public function setDebug(bool $debug): void
     {
         $this->debug = $debug;
-    }
-
-    /**
-     * @return int
-     */
-    public function getMaxPayload(): int
-    {
-        return $this->maxPayload;
-    }
-
-    /**
-     * @param int $maxPayload
-     */
-    public function setMaxPayload(int $maxPayload): void
-    {
-        $this->maxPayload = $maxPayload;
     }
 }
