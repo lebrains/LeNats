@@ -48,7 +48,12 @@ class Subscriber extends SubscriptionMessageStreamer
 
         $this->getStream()->publish($subscription->getAcknowledgeInbox(), $request);
 
-        $this->logger->notice(sprintf('ack processed %s [sequenced_id:%s]', $subscription->getProcessed(), $event->getSequenceId()));
+        $this->logger->notice(sprintf(
+            'ack processed %s [sequenced_id:%s] [guid: %s]',
+            $subscription->getProcessed(),
+            $event->getSequenceId(),
+            $event->getId()
+        ));
     }
 
     /**
