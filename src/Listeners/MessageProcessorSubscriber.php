@@ -25,7 +25,7 @@ class MessageProcessorSubscriber implements EventSubscriberInterface, EventDispa
 {
     use Dispatcherable;
 
-    private const MAX_MESSAGES_IN_ONE_TICK = 10;
+    private const MAX_MESSAGES_IN_ONE_TICK = 1;
 
     /** @var array */
     private static $commandEvents = [

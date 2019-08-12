@@ -10,15 +10,27 @@ use LeNats\Exceptions\SubscriptionException;
 use LeNats\Exceptions\SubscriptionNotFoundException;
 use LeNats\Listeners\Responses\SubscriptionResponseListener;
 use LeNats\Listeners\SubscriptionListener;
+use LeNats\Services\Connection;
 use NatsStreamingProtocol\Ack;
 use NatsStreamingProtocol\StartPosition;
 use NatsStreamingProtocol\SubscriptionRequest;
 use NatsStreamingProtocol\UnsubscribeRequest;
+use Psr\Log\LoggerInterface;
 
 class Subscriber extends SubscriptionMessageStreamer
 {
     /** @var string[] */
     private static $unsubscribed = [];
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    public function __construct(Connection $connection, LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        parent::__construct($connection);
+    }
 
     /**
      * @param  CloudEvent          $event
@@ -35,6 +47,8 @@ class Subscriber extends SubscriptionMessageStreamer
         $request->setSequence($event->getSequenceId());
 
         $this->getStream()->publish($subscription->getAcknowledgeInbox(), $request);
+
+        $this->logger->notice(sprintf('ack processed %s [sequenced_id:%s]', $subscription->getProcessed(), $event->getSequenceId()));
     }
 
     /**
