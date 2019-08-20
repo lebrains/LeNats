@@ -36,7 +36,7 @@ abstract class SubscriptionMessageStreamer extends MessageStreamer implements Ev
         }
 
         $this->createSubscriptionInbox($subscription->getInbox(), $subscription->getSid());
-        if ($subscription->getMessageLimit()) {
+        if ($subscription->getMessageLimit() !== null) {
             $this->unsubscribe($subscription->getSid(), $subscription->getMessageLimit());
         }
 

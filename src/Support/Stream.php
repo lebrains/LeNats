@@ -111,23 +111,7 @@ class Stream
 
         $this->log($message);
 
-        $deferred = new Deferred();
-
-        $this->loop->futureTick(function () use ($message, $deferred): void {
-            $result = $this->stream->write($message);
-
-            if ($result) {
-                $deferred->resolve($result);
-            } else {
-                $deferred->reject(new ConnectionException('Write message error'));
-            }
-        });
-
-        try {
-            return await($deferred->promise(), $this->loop, $this->writeTimeout);
-        } catch (\Throwable $e) {
-            throw new ConnectionException($e->getMessage());
-        }
+        return $this->stream->write($message);
     }
 
     /**

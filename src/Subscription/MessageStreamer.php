@@ -44,7 +44,7 @@ abstract class MessageStreamer
     {
         $params = [$sid];
 
-        if ($quantity) {
+        if ($quantity !== null) {
             $params[] = $quantity;
         }
 
