@@ -2,7 +2,9 @@
 
 namespace LeNats\Services;
 
+use LeNats\Support\RandomGenerator;
 use NatsStreamingProtocol\ConnectResponse;
+use RandomLib\Factory;
 
 class Configuration
 {
@@ -83,6 +85,17 @@ class Configuration
             if (method_exists($this, $method)) {
                 $this->{$method}($value);
             }
+        }
+
+        if (!empty($config['is_random_client_id']) && $config['is_random_client_id']) {
+            if (PHP_VERSION_ID > 70000) {
+                $generator = new RandomGenerator();
+            } else {
+                $randomFactory = new Factory();
+                $generator = $randomFactory->getLowStrengthGenerator();
+            }
+
+            $this->clientId .= '_' . $generator->generateString(16);
         }
     }
 

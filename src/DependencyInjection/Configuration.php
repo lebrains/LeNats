@@ -45,6 +45,7 @@ class Configuration implements ConfigurationInterface
             ->integerNode('connection_timeout')->defaultValue(30)->end()
             ->integerNode('write_timeout')->defaultValue(5)->end()
             ->booleanNode('debug')->defaultValue(false)->end()
+            ->booleanNode('is_random_client_id')->defaultValue(false)->end()
             ->arrayNode('context')
             ->children()
             ->arrayNode('tls')
