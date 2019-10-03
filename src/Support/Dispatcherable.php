@@ -30,7 +30,7 @@ trait Dispatcherable
         $eventName = $eventName ?? get_class($event);
 
         if ($this->dispatcher instanceof NextEventDispatcherInterface) {
-            $this->dispatcher->dispatch($event, $eventName);
+            $this->dispatcher->dispatch($event);
         } else {
             $this->dispatcher->dispatch($eventName, $event);
         }
